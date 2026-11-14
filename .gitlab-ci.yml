@@ -40,15 +40,13 @@ checkov:
     name: bridgecrew/checkov:3.4.3
     entrypoint: [""]
   script:
-    - checkov -d . --framework terraform --output cli --output junitxml --output-file-path console,results
-  after_script:
-    - ls -R results || true
+    - checkov -d . --framework terraform --output cli --output junitxml --output-file-path console,results.xml
   artifacts:
     when: always
     paths:
-      - results/
+      - results.xml
     reports:
-      junit: results/*.xml
+      junit: results.xml
   allow_failure: true
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
