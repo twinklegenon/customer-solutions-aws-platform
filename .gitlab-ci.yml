@@ -15,6 +15,7 @@ validate:
     - terraform validate
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_PIPELINE_SOURCE == "web"
     - if: $CI_COMMIT_BRANCH == "main"
 
 # Proves the GitLab OIDC login to AWS works. Runs on main only,
