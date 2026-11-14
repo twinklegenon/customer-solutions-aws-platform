@@ -41,12 +41,14 @@ checkov:
     entrypoint: [""]
   script:
     - checkov -d . --framework terraform --output cli --output junitxml --output-file-path console,results
+  after_script:
+    - ls -R results || true
   artifacts:
     when: always
     paths:
       - results/
     reports:
-      junit: results/results_junitxml.xml
+      junit: results/*.xml
   allow_failure: true
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
