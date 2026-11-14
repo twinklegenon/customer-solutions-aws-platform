@@ -1,0 +1,20 @@
+##################################
+# Interfaces
+##################################
+
+output "vpc_id" {
+  description = "ID of the dev VPC"
+  value       = module.networking.vpc_id
+}
+
+output "public_subnet_ids" {
+  value = module.networking.public_subnet_ids
+}
+
+output "private_app_subnet_ids" {
+  value = module.networking.private_app_subnet_ids
+}
+
+output "private_data_subnet_ids" {
+  value = module.networking.private_data_subnet_ids
+}
