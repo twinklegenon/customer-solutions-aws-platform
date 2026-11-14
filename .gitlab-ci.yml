@@ -33,21 +33,20 @@ validate:
     - if: $CI_PIPELINE_SOURCE == "web"
 
 # Security scan of the Terraform code. Runs on merge requests (before merge) and manual
-# runs. Report-only for now: findings do not block (allow_failure).
+# runs. Report-only for now: --soft-fail makes the job pass even when checks fail.
 checkov:
   stage: validate
   image:
     name: bridgecrew/checkov:3.4.3
     entrypoint: [""]
   script:
-    - checkov -d . --framework terraform --output cli --output junitxml --output-file-path console,results.xml
+    - checkov -d . --framework terraform --soft-fail --output cli --output junitxml --output-file-path console,results.xml
   artifacts:
     when: always
     paths:
       - results.xml
     reports:
       junit: results.xml
-  allow_failure: true
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_PIPELINE_SOURCE == "web"
