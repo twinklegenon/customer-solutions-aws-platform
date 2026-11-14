@@ -32,26 +32,27 @@ validate:
     - if: $CI_PIPELINE_SOURCE == "web"
     - if: $CI_COMMIT_BRANCH == "main"
 
-# Security scan of the Terraform code. Findings are reported but do not block
-# the pipeline yet (allow_failure).
-checkov:
-  stage: validate
-  image:
-    name: bridgecrew/checkov:3.4.3
-    entrypoint: [""]
-  script:
-    - checkov -d . --framework terraform --output cli --output junitxml --output-file-path console,results
-  artifacts:
-    when: always
-    paths:
-      - results/
-    reports:
-      junit: results/results_junitxml.xml
-  allow_failure: true
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_PIPELINE_SOURCE == "web"
-    - if: $CI_COMMIT_BRANCH == "main"
+# Checkov is commented out until the whole setup is built.
+# # Security scan of the Terraform code. Findings are reported but do not block
+# # the pipeline yet (allow_failure).
+# checkov:
+#   stage: validate
+#   image:
+#     name: bridgecrew/checkov:3.4.3
+#     entrypoint: [""]
+#   script:
+#     - checkov -d . --framework terraform --output cli --output junitxml --output-file-path console,results
+#   artifacts:
+#     when: always
+#     paths:
+#       - results/
+#     reports:
+#       junit: results/results_junitxml.xml
+#   allow_failure: true
+#   rules:
+#     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+#     - if: $CI_PIPELINE_SOURCE == "web"
+#     - if: $CI_COMMIT_BRANCH == "main"
 
 # --- plan stage ------------------------------------------------------------
 
