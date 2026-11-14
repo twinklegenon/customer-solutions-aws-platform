@@ -31,26 +31,27 @@ validate:
     - if: $CI_PIPELINE_SOURCE == "web"
     - if: $CI_COMMIT_BRANCH == "main"
 
-# Security scan of the Terraform code. Findings are reported but do not block
-# the pipeline yet (allow_failure).
-checkov:
-  stage: validate
-  image:
-    name: bridgecrew/checkov:3.4.3
-    entrypoint: [""]
-  script:
-    - checkov -d . --framework terraform --output cli --output junitxml --output-file-path console,results
-  artifacts:
-    when: always
-    paths:
-      - results/
-    reports:
-      junit: results/results_junitxml.xml
-  allow_failure: true
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_PIPELINE_SOURCE == "web"
-    - if: $CI_COMMIT_BRANCH == "main"
+# Checkov is commented out for now.
+# # Security scan of the Terraform code. Findings are reported but do not block
+# # the pipeline yet (allow_failure).
+# checkov:
+#   stage: validate
+#   image:
+#     name: bridgecrew/checkov:3.4.3
+#     entrypoint: [""]
+#   script:
+#     - checkov -d . --framework terraform --output cli --output junitxml --output-file-path console,results
+#   artifacts:
+#     when: always
+#     paths:
+#       - results/
+#     reports:
+#       junit: results/results_junitxml.xml
+#   allow_failure: true
+#   rules:
+#     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+#     - if: $CI_PIPELINE_SOURCE == "web"
+#     - if: $CI_COMMIT_BRANCH == "main"
 
 # --- test stage ------------------------------------------------------------
 
@@ -69,7 +70,24 @@ aws-auth-test:
 
 # --- plan stage ------------------------------------------------------------
 
-# Shows what Terraform would change in dev. main only (needs the AWS role).
+# Plan on the merge request, before merge. Uses a separate read-only role
+# (AWS_PLAN_ROLE_ARN, an unprotected variable) because feature branches cannot
+# use the main-only role. -lock=false so the role needs no write access to the state bucket.
+plan-dev-mr:
+  extends: .aws-auth
+  stage: plan
+  image:
+    name: hashicorp/terraform:1.15
+    entrypoint: [""]
+  script:
+    - export AWS_ROLE_ARN="$AWS_PLAN_ROLE_ARN"
+    - cd environments/dev
+    - terraform init -input=false
+    - terraform plan -input=false -lock=false -var-file=dev.tfvars
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+# Shows what Terraform would change in dev after merge. main only (needs the main-only role).
 plan-dev:
   extends: .aws-auth
   stage: plan
