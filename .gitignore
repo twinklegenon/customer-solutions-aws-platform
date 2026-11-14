@@ -5,10 +5,11 @@
 *.tfstate
 *.tfstate.*
 
-# Variable values (may hold secrets / account-specific data)
+# Variable values: ignored by default, but the per-environment files hold no secrets and are committed
 *.tfvars
 *.tfvars.json
 !example.tfvars
+!environments/*/*.tfvars
 
 # Plan output
 *.tfplan

@@ -1,8 +1,21 @@
 stages:
   - validate
   - test
+  - plan
 
-# Runs on merge requests and on main. No AWS access needed.
+# Gets short-lived AWS credentials from GitLab's OIDC token (no stored keys).
+# AWS_ROLE_ARN and AWS_DEFAULT_REGION come from CI/CD variables.
+.aws-auth:
+  id_tokens:
+    GITLAB_OIDC_TOKEN:
+      aud: https://gitlab.com
+  before_script:
+    - echo "$GITLAB_OIDC_TOKEN" > /tmp/web_identity_token
+    - export AWS_WEB_IDENTITY_TOKEN_FILE=/tmp/web_identity_token
+
+# --- validate stage: no AWS access needed ---------------------------------
+
+# Runs on merge requests, manual runs, and main.
 validate:
   stage: validate
   image:
@@ -18,19 +31,54 @@ validate:
     - if: $CI_PIPELINE_SOURCE == "web"
     - if: $CI_COMMIT_BRANCH == "main"
 
-# Proves the GitLab OIDC login to AWS works. Runs on main only,
-# because the IAM role trusts only the main branch.
+# Security scan of the Terraform code. Findings are reported but do not block
+# the pipeline yet (allow_failure).
+checkov:
+  stage: validate
+  image:
+    name: bridgecrew/checkov:3.4.3
+    entrypoint: [""]
+  script:
+    - checkov -d . --framework terraform --output cli --output junitxml --output-file-path console,results
+  artifacts:
+    when: always
+    paths:
+      - results/
+    reports:
+      junit: results/results_junitxml.xml
+  allow_failure: true
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_PIPELINE_SOURCE == "web"
+    - if: $CI_COMMIT_BRANCH == "main"
+
+# --- test stage ------------------------------------------------------------
+
+# Proves the OIDC login to AWS works. main only, because the IAM role
+# trusts only the main branch.
 aws-auth-test:
+  extends: .aws-auth
   stage: test
   image:
     name: amazon/aws-cli
     entrypoint: [""]
-  id_tokens:
-    GITLAB_OIDC_TOKEN:
-      aud: https://gitlab.com
   script:
-    - echo "$GITLAB_OIDC_TOKEN" > /tmp/web_identity_token
-    - export AWS_WEB_IDENTITY_TOKEN_FILE=/tmp/web_identity_token
     - aws sts get-caller-identity
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+
+# --- plan stage ------------------------------------------------------------
+
+# Shows what Terraform would change in dev. main only (needs the AWS role).
+plan-dev:
+  extends: .aws-auth
+  stage: plan
+  image:
+    name: hashicorp/terraform:1.15
+    entrypoint: [""]
+  script:
+    - cd environments/dev
+    - terraform init -input=false
+    - terraform plan -input=false -var-file=dev.tfvars
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
