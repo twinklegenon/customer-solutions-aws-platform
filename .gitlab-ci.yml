@@ -1,7 +1,8 @@
 stages:
   - validate
-  - test
   - plan
+  - apply
+  - destroy
 
 # Gets short-lived AWS credentials from GitLab's OIDC token (no stored keys).
 # AWS_ROLE_ARN and AWS_DEFAULT_REGION come from CI/CD variables.
@@ -31,41 +32,25 @@ validate:
     - if: $CI_PIPELINE_SOURCE == "web"
     - if: $CI_COMMIT_BRANCH == "main"
 
-# Checkov is commented out for now.
-# # Security scan of the Terraform code. Findings are reported but do not block
-# # the pipeline yet (allow_failure).
-# checkov:
-#   stage: validate
-#   image:
-#     name: bridgecrew/checkov:3.4.3
-#     entrypoint: [""]
-#   script:
-#     - checkov -d . --framework terraform --output cli --output junitxml --output-file-path console,results
-#   artifacts:
-#     when: always
-#     paths:
-#       - results/
-#     reports:
-#       junit: results/results_junitxml.xml
-#   allow_failure: true
-#   rules:
-#     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-#     - if: $CI_PIPELINE_SOURCE == "web"
-#     - if: $CI_COMMIT_BRANCH == "main"
-
-# --- test stage ------------------------------------------------------------
-
-# Proves the OIDC login to AWS works. main only, because the IAM role
-# trusts only the main branch.
-aws-auth-test:
-  extends: .aws-auth
-  stage: test
+# Security scan of the Terraform code. Findings are reported but do not block
+# the pipeline yet (allow_failure).
+checkov:
+  stage: validate
   image:
-    name: amazon/aws-cli
+    name: bridgecrew/checkov:3.4.3
     entrypoint: [""]
   script:
-    - aws sts get-caller-identity
+    - checkov -d . --framework terraform --output cli --output junitxml --output-file-path console,results
+  artifacts:
+    when: always
+    paths:
+      - results/
+    reports:
+      junit: results/results_junitxml.xml
+  allow_failure: true
   rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_PIPELINE_SOURCE == "web"
     - if: $CI_COMMIT_BRANCH == "main"
 
 # --- plan stage ------------------------------------------------------------
@@ -88,6 +73,7 @@ plan-dev-mr:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
 
 # Shows what Terraform would change in dev after merge. main only (needs the main-only role).
+# Saves the plan as an artifact that expires after 30 minutes; apply-dev applies this exact plan.
 plan-dev:
   extends: .aws-auth
   stage: plan
@@ -97,6 +83,51 @@ plan-dev:
   script:
     - cd environments/dev
     - terraform init -input=false
-    - terraform plan -input=false -var-file=dev.tfvars
+    - terraform plan -input=false -var-file=dev.tfvars -out=tfplan
+  artifacts:
+    paths:
+      - environments/dev/tfplan
+    expire_in: 30 minutes
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
+
+# --- apply / destroy stages (manual, dev only) ----------------------------
+
+# Creates the dev resources. Click to run; applies the plan saved by plan-dev.
+# If the plan artifact has expired, or the state changed since, re-run plan-dev first.
+# resource_group stops two dev jobs from running at the same time.
+apply-dev:
+  extends: .aws-auth
+  stage: apply
+  image:
+    name: hashicorp/terraform:1.15
+    entrypoint: [""]
+  resource_group: dev
+  dependencies:
+    - plan-dev
+  script:
+    - cd environments/dev
+    - terraform init -input=false
+    - terraform apply -input=false tfplan
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual
+      allow_failure: true
+
+# Removes everything in dev. Click to run. allow_failure keeps the pipeline from
+# waiting on this job, so it can be clicked at any time.
+destroy-dev:
+  extends: .aws-auth
+  stage: destroy
+  image:
+    name: hashicorp/terraform:1.15
+    entrypoint: [""]
+  resource_group: dev
+  script:
+    - cd environments/dev
+    - terraform init -input=false
+    - terraform destroy -input=false -auto-approve -var-file=dev.tfvars
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual
+      allow_failure: true
