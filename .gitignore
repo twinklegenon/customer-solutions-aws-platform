@@ -1,0 +1,28 @@
+# Terraform working dir and plugins
+.terraform/
+
+# State (kept in the S3 backend, never in git)
+*.tfstate
+*.tfstate.*
+
+# Variable values (may hold secrets / account-specific data)
+*.tfvars
+*.tfvars.json
+!example.tfvars
+
+# Plan output
+*.tfplan
+tfplan
+plan.out
+
+
+# Credentials
+.env
+*.pem
+*.key
+.aws/
+
+# do commit .terraform.lock.hcl
+
+# Claude instructions (local only)
+CLAUDE.md

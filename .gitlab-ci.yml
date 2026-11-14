@@ -1,0 +1,35 @@
+stages:
+  - validate
+  - test
+
+# Runs on merge requests and on main. No AWS access needed.
+validate:
+  stage: validate
+  image:
+    name: hashicorp/terraform:1.15
+    entrypoint: [""]
+  script:
+    - terraform fmt -check -recursive
+    - cd environments/dev
+    - terraform init -backend=false -input=false
+    - terraform validate
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
+
+# Proves the GitLab OIDC login to AWS works. Runs on main only,
+# because the IAM role trusts only the main branch.
+aws-auth-test:
+  stage: test
+  image:
+    name: amazon/aws-cli
+    entrypoint: [""]
+  id_tokens:
+    GITLAB_OIDC_TOKEN:
+      aud: https://gitlab.com
+  script:
+    - echo "$GITLAB_OIDC_TOKEN" > /tmp/web_identity_token
+    - export AWS_WEB_IDENTITY_TOKEN_FILE=/tmp/web_identity_token
+    - aws sts get-caller-identity
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
