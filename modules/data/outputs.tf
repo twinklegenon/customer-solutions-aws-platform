@@ -41,3 +41,8 @@ output "static_bucket_regional_domain_name" {
   description = "Regional domain name, used as the CloudFront origin"
   value       = aws_s3_bucket.static.bucket_regional_domain_name
 }
+
+output "db_name" {
+  description = "Name of the initial database"
+  value       = aws_db_instance.postgres.db_name
+}
