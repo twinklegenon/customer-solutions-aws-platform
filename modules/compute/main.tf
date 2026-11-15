@@ -59,6 +59,25 @@ resource "aws_ecs_cluster" "cluster" {
   name = "${local.name_prefix}-ecs-cluster"
 }
 
+# Lets ECS read the database secret and decrypt it, so the password is injected at start.
+data "aws_iam_policy_document" "execution_secrets" {
+  statement {
+    actions   = ["secretsmanager:GetSecretValue"]
+    resources = [var.db_secret_arn]
+  }
+
+  statement {
+    actions   = ["kms:Decrypt"]
+    resources = [var.secrets_kms_key_arn]
+  }
+}
+
+resource "aws_iam_role_policy" "execution_secrets" {
+  name   = "${local.name_prefix}-ecs-execution-secrets"
+  role   = var.task_execution_role_name
+  policy = data.aws_iam_policy_document.execution_secrets.json
+}
+
 resource "aws_ecs_task_definition" "app" {
   family                   = "${local.name_prefix}-ecs-app"
   requires_compatibilities = ["FARGATE"]
@@ -67,6 +86,8 @@ resource "aws_ecs_task_definition" "app" {
   memory                   = var.task_memory
   execution_role_arn       = var.task_execution_role_arn
   task_role_arn            = var.task_role_arn
+
+  depends_on = [aws_iam_role_policy.execution_secrets]
 
   container_definitions = jsonencode([
     {
@@ -77,6 +98,9 @@ resource "aws_ecs_task_definition" "app" {
       portMappings = [
         { containerPort = var.app_port, protocol = "tcp" }
       ]
+
+      environment = [for key in sort(keys(var.container_environment)) : { name = key, value = var.container_environment[key] }]
+      secrets     = var.container_secrets
 
       logConfiguration = {
         logDriver = "awslogs"
