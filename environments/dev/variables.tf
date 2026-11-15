@@ -49,3 +49,42 @@ variable "subnets" {
   }))
   description = "Subnet CIDRs per availability zone, keyed by AZ name"
 }
+
+
+variable "db_skip_final_snapshot" {
+  type        = bool
+  description = "Skip the final database snapshot on destroy"
+  default     = false
+}
+
+
+variable "db_deletion_protection" {
+  type        = bool
+  description = "Block deletion of the database"
+  default     = true
+}
+
+
+variable "s3_force_destroy" {
+  type        = bool
+  description = "Delete the static bucket even when it holds objects"
+  default     = false
+}
+
+
+variable "db_instance_class" {
+  type        = string
+  description = "RDS instance class"
+}
+
+
+variable "db_allocated_storage" {
+  type        = number
+  description = "RDS storage in GiB"
+}
+
+
+variable "db_multi_az" {
+  type        = bool
+  description = "Create a Multi-AZ standby for the database"
+}
