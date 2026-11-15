@@ -34,6 +34,12 @@ variable "db_port" {
   default     = 5432
 }
 
+variable "redis_port" {
+  type        = number
+  description = "Port the Redis cache listens on"
+  default     = 6379
+}
+
 variable "alb_port" {
   type        = number
   description = "Port the load balancer listens on: 443 with a certificate, 80 without"

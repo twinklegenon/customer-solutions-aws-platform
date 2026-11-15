@@ -53,7 +53,7 @@ resource "aws_elasticache_replication_group" "redis" {
   engine         = "redis"
   engine_version = var.redis_engine_version
   node_type      = var.redis_node_type
-  port           = 6379
+  port           = var.redis_port
 
   num_cache_clusters         = var.redis_nodes
   automatic_failover_enabled = var.redis_nodes > 1

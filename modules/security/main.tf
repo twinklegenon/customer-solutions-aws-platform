@@ -135,8 +135,8 @@ resource "aws_vpc_security_group_egress_rule" "app_to_redis" {
   description                  = "To Redis"
   referenced_security_group_id = aws_security_group.redis.id
   ip_protocol                  = "tcp"
-  from_port                    = 6379
-  to_port                      = 6379
+  from_port                    = var.redis_port
+  to_port                      = var.redis_port
 }
 
 resource "aws_vpc_security_group_egress_rule" "app_to_vpc_endpoints" {
@@ -172,8 +172,8 @@ resource "aws_vpc_security_group_ingress_rule" "redis_from_app" {
   description                  = "From application tasks"
   referenced_security_group_id = aws_security_group.app.id
   ip_protocol                  = "tcp"
-  from_port                    = 6379
-  to_port                      = 6379
+  from_port                    = var.redis_port
+  to_port                      = var.redis_port
 }
 
 # --- IAM roles for ECS -------------------------------------------------
