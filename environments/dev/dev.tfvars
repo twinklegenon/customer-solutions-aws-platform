@@ -22,3 +22,10 @@ db_multi_az          = true
 db_skip_final_snapshot = true  # best practice: false (keep a final snapshot)
 db_deletion_protection = false # best practice: true (block accidental deletion)
 s3_force_destroy       = true  # best practice: false (never delete a bucket that has objects)
+
+# Load balancer certificate. Null = HTTP 80 (demo without a domain). Set the ACM certificate ARN to use HTTPS 443.
+certificate_arn = null
+
+# Dev only, for demo: allow a quick destroy.
+alb_deletion_protection = false # best practice: true (block accidental deletion)
+ecr_force_delete        = true  # best practice: false (never delete a repository that has images)
