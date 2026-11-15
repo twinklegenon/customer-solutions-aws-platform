@@ -62,6 +62,29 @@ module "compute" {
   task_role_arn           = module.security.ecs_task_role_arn
   certificate_arn         = module.dns.alb_certificate_arn
 
+  task_execution_role_name = module.security.ecs_task_execution_role_name
+  db_secret_arn            = module.data.db_master_secret_arn
+  secrets_kms_key_arn      = module.security.kms_key_arns["secrets"]
+  health_check_path        = "/health"
+  image_tag                = var.app_image_tag
+
+  container_environment = {
+    APP_ENV       = var.environment
+    DB_HOST       = module.data.db_address
+    DB_PORT       = tostring(module.data.db_port)
+    DB_NAME       = module.data.db_name
+    DB_SSLMODE    = "require"
+    REDIS_HOST    = module.data.redis_primary_endpoint
+    REDIS_PORT    = "6379"
+    REDIS_TLS     = "true"
+    COOKIE_SECURE = "true"
+  }
+
+  container_secrets = [
+    { name = "DB_USER", valueFrom = "${module.data.db_master_secret_arn}:username::" },
+    { name = "DB_PASSWORD", valueFrom = "${module.data.db_master_secret_arn}:password::" },
+  ]
+
   alb_deletion_protection = var.alb_deletion_protection
   ecr_force_delete        = var.ecr_force_delete
 }

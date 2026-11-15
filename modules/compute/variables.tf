@@ -105,3 +105,33 @@ variable "log_retention_days" {
   description = "Retention in days for the application log group"
   default     = 30
 }
+
+variable "task_execution_role_name" {
+  type        = string
+  description = "Name of the ECS task execution role, so it can read the database secret"
+}
+
+variable "db_secret_arn" {
+  type        = string
+  description = "Secrets Manager secret that holds the database credentials"
+}
+
+variable "secrets_kms_key_arn" {
+  type        = string
+  description = "KMS key that encrypts the database secret"
+}
+
+variable "container_environment" {
+  type        = map(string)
+  description = "Environment variables for the application container"
+  default     = {}
+}
+
+variable "container_secrets" {
+  type = list(object({
+    name      = string
+    valueFrom = string
+  }))
+  description = "Secrets Manager values injected into the container as environment variables"
+  default     = []
+}
