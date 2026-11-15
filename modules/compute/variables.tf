@@ -1,0 +1,108 @@
+##################################
+# Interfaces
+##################################
+
+variable "environment" {
+  type        = string
+  description = "Deployment environment (dev, stage, prod)"
+}
+
+variable "region" {
+  type        = string
+  description = "AWS region, used for the container log configuration"
+}
+
+variable "vpc_id" {
+  type        = string
+  description = "ID of the VPC"
+}
+
+variable "public_subnet_ids" {
+  type        = list(string)
+  description = "Public subnet IDs for the load balancer"
+}
+
+variable "app_subnet_ids" {
+  type        = list(string)
+  description = "Private app subnet IDs for the ECS tasks"
+}
+
+variable "alb_security_group_id" {
+  type        = string
+  description = "Security group for the load balancer"
+}
+
+variable "app_security_group_id" {
+  type        = string
+  description = "Security group for the ECS tasks"
+}
+
+variable "task_execution_role_arn" {
+  type        = string
+  description = "ECS task execution role ARN"
+}
+
+variable "task_role_arn" {
+  type        = string
+  description = "ECS task role ARN"
+}
+
+variable "app_port" {
+  type        = number
+  description = "Port the application container listens on"
+  default     = 8080
+}
+
+variable "certificate_arn" {
+  type        = string
+  description = "ACM certificate for the HTTPS listener. Leave null to listen on HTTP 80 (demo without a domain)"
+  default     = null
+}
+
+variable "image_tag" {
+  type        = string
+  description = "Tag of the application image in the ECR repository"
+  default     = "latest"
+}
+
+variable "health_check_path" {
+  type        = string
+  description = "Path the load balancer calls to check a task"
+  default     = "/"
+}
+
+variable "task_cpu" {
+  type        = number
+  description = "Fargate task CPU units"
+  default     = 256
+}
+
+variable "task_memory" {
+  type        = number
+  description = "Fargate task memory in MiB"
+  default     = 512
+}
+
+variable "desired_count" {
+  type        = number
+  description = "Number of tasks, spread across the AZs"
+  default     = 2
+}
+
+variable "alb_deletion_protection" {
+  type        = bool
+  description = "Block deletion of the load balancer (false only for dev)"
+  default     = true
+}
+
+variable "ecr_force_delete" {
+  type        = bool
+  description = "Delete the ECR repository even when it holds images (true only for dev)"
+  default     = false
+}
+
+variable "log_retention_days" {
+  type        = number
+  description = "Retention in days for the application log group"
+  default     = 30
+}
