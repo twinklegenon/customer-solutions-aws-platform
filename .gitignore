@@ -24,6 +24,3 @@ plan.out
 .aws/
 
 # do commit .terraform.lock.hcl
-
-# Claude instructions (local only)
-CLAUDE.md
