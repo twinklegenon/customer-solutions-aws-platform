@@ -24,3 +24,7 @@ plan.out
 .aws/
 
 # do commit .terraform.lock.hcl
+
+# Python caches
+__pycache__/
+*.pyc
