@@ -65,3 +65,23 @@ module "compute" {
   alb_deletion_protection = var.alb_deletion_protection
   ecr_force_delete        = var.ecr_force_delete
 }
+
+module "edge" {
+  source = "../../modules/edge"
+
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
+  }
+
+  environment                        = var.environment
+  zone_id                            = module.dns.zone_id
+  app_domain                         = module.dns.app_domain
+  origin_domain                      = module.dns.origin_domain
+  cloudfront_certificate_arn         = module.dns.cloudfront_certificate_arn
+  alb_dns_name                       = module.compute.alb_dns_name
+  alb_zone_id                        = module.compute.alb_zone_id
+  static_bucket_name                 = module.data.static_bucket_name
+  static_bucket_arn                  = module.data.static_bucket_arn
+  static_bucket_regional_domain_name = module.data.static_bucket_regional_domain_name
+}
