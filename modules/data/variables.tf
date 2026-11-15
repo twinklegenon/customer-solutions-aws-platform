@@ -97,6 +97,12 @@ variable "redis_node_type" {
   default     = "cache.t4g.micro"
 }
 
+variable "redis_port" {
+  type        = number
+  description = "Port the Redis cache listens on"
+  default     = 6379
+}
+
 variable "redis_nodes" {
   type        = number
   description = "Number of cache nodes (2 or more enables automatic failover)"

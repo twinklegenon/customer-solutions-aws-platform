@@ -90,6 +90,13 @@ variable "db_multi_az" {
 }
 
 
+variable "redis_port" {
+  type        = number
+  description = "Port the Redis cache listens on"
+  default     = 6379
+}
+
+
 variable "domain_name" {
   type        = string
   description = "Registered domain with a public Route 53 hosted zone"

@@ -18,6 +18,7 @@ module "security" {
   region      = var.region
   vpc_id      = module.networking.vpc_id
   vpc_cidr    = var.vpc_cidr
+  redis_port  = var.redis_port
 }
 
 module "data" {
@@ -28,6 +29,7 @@ module "data" {
   kms_key_arns            = module.security.kms_key_arns
   rds_security_group_id   = module.security.rds_security_group_id
   redis_security_group_id = module.security.redis_security_group_id
+  redis_port              = var.redis_port
 
   db_instance_class      = var.db_instance_class
   db_allocated_storage   = var.db_allocated_storage
