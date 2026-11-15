@@ -33,3 +33,9 @@ variable "db_port" {
   description = "Port the database listens on (5432 for PostgreSQL)"
   default     = 5432
 }
+
+variable "alb_port" {
+  type        = number
+  description = "Port the load balancer listens on: 443 with a certificate, 80 without"
+  default     = 443
+}

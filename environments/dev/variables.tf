@@ -88,3 +88,24 @@ variable "db_multi_az" {
   type        = bool
   description = "Create a Multi-AZ standby for the database"
 }
+
+
+variable "certificate_arn" {
+  type        = string
+  description = "ACM certificate for the load balancer HTTPS listener. Null runs HTTP 80 (demo without a domain)"
+  default     = null
+}
+
+
+variable "alb_deletion_protection" {
+  type        = bool
+  description = "Block deletion of the load balancer"
+  default     = true
+}
+
+
+variable "ecr_force_delete" {
+  type        = bool
+  description = "Delete the ECR repository even when it holds images"
+  default     = false
+}

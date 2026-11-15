@@ -37,7 +37,7 @@ Rules reference other security groups, not IP addresses.
 
 | Rule | Direction | Allows | Purpose |
 |---|---|---|---|
-| ALB from CloudFront | In to `alb` | 443 from the CloudFront prefix list | Only CloudFront can reach the load balancer |
+| ALB from CloudFront | In to `alb` | `alb_port` from the CloudFront prefix list (443 with a certificate, 80 without) | Only CloudFront can reach the load balancer |
 | ALB to app | Out of `alb` | 8080 to `app` | The ALB forwards only to the application |
 | App from ALB | In to `app` | 8080 from `alb` | The app accepts traffic only from the load balancer |
 | App to database | Out of `app` | 5432 to `rds` | Application reaches the database |
