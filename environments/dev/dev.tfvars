@@ -18,7 +18,7 @@ db_instance_class    = "db.t4g.micro"
 db_allocated_storage = 20
 db_multi_az          = true
 
-# Dev only: allow a quick destroy. Stage and prod keep the safe defaults.
-db_skip_final_snapshot = true
-db_deletion_protection = false
-s3_force_destroy       = true
+# Dev only, for demo: allow a quick destroy. Best practice (stage and prod) is the opposite.
+db_skip_final_snapshot = true  # best practice: false (keep a final snapshot)
+db_deletion_protection = false # best practice: true (block accidental deletion)
+s3_force_destroy       = true  # best practice: false (never delete a bucket that has objects)
