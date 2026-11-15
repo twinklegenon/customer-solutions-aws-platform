@@ -18,7 +18,6 @@ module "security" {
   region      = var.region
   vpc_id      = module.networking.vpc_id
   vpc_cidr    = var.vpc_cidr
-  alb_port    = local.alb_port
 }
 
 module "data" {
@@ -38,6 +37,17 @@ module "data" {
   s3_force_destroy       = var.s3_force_destroy
 }
 
+module "dns" {
+  source = "../../modules/dns"
+
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
+  }
+
+  domain_name = var.domain_name
+}
+
 module "compute" {
   source = "../../modules/compute"
 
@@ -50,7 +60,7 @@ module "compute" {
   app_security_group_id   = module.security.app_security_group_id
   task_execution_role_arn = module.security.ecs_task_execution_role_arn
   task_role_arn           = module.security.ecs_task_role_arn
-  certificate_arn         = var.certificate_arn
+  certificate_arn         = module.dns.alb_certificate_arn
 
   alb_deletion_protection = var.alb_deletion_protection
   ecr_force_delete        = var.ecr_force_delete
