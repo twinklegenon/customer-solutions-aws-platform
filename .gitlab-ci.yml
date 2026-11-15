@@ -2,6 +2,7 @@ stages:
   - validate
   - plan
   - apply
+  - image
   - destroy
 
 # Gets short-lived AWS credentials from GitLab's OIDC token (no stored keys).
@@ -125,6 +126,42 @@ destroy-dev:
     - cd environments/dev
     - terraform init -input=false
     - terraform destroy -input=false -auto-approve -var-file=dev.tfvars
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual
+      allow_failure: true
+
+# --- image stage (manual, dev only) -----------------------------------------
+
+# Copies a demo image into the ECR repository, then restarts the ECS service so the tasks start.
+# Run it after apply-dev has created the repository. nginx-unprivileged listens on 8080 like the app.
+push-image-dev:
+  extends: .aws-auth
+  stage: image
+  image: docker:27
+  services:
+    - docker:27-dind
+  variables:
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
+    DOCKER_TLS_VERIFY: "1"
+    DOCKER_CERT_PATH: "/certs/client"
+    SOURCE_IMAGE: public.ecr.aws/nginx/nginx-unprivileged:stable
+    ECR_REPOSITORY: dev-ecr-app
+    ECS_CLUSTER: dev-ecs-cluster
+    ECS_SERVICE: dev-ecs-app
+  before_script:
+    - echo "$GITLAB_OIDC_TOKEN" > /tmp/web_identity_token
+    - export AWS_WEB_IDENTITY_TOKEN_FILE=/tmp/web_identity_token
+    - apk add --no-cache aws-cli
+  script:
+    - ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+    - REGISTRY="$ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com"
+    - aws ecr get-login-password | docker login --username AWS --password-stdin "$REGISTRY"
+    - docker pull "$SOURCE_IMAGE"
+    - docker tag "$SOURCE_IMAGE" "$REGISTRY/$ECR_REPOSITORY:latest"
+    - docker push "$REGISTRY/$ECR_REPOSITORY:latest"
+    - aws ecs update-service --cluster "$ECS_CLUSTER" --service "$ECS_SERVICE" --force-new-deployment
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
       when: manual
