@@ -34,23 +34,8 @@ resource "aws_lb_target_group" "app" {
   }
 }
 
-# No certificate: HTTP 80 (demo). With a certificate: HTTPS 443.
-resource "aws_lb_listener" "http" {
-  count = var.certificate_arn == null ? 1 : 0
-
-  load_balancer_arn = aws_lb.alb.arn
-  port              = 80
-  protocol          = "HTTP"
-
-  default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.app.arn
-  }
-}
-
+# HTTPS only: CloudFront reaches the load balancer over TLS using this certificate.
 resource "aws_lb_listener" "https" {
-  count = var.certificate_arn == null ? 0 : 1
-
   load_balancer_arn = aws_lb.alb.arn
   port              = 443
   protocol          = "HTTPS"
@@ -124,5 +109,5 @@ resource "aws_ecs_service" "app" {
     container_port   = var.app_port
   }
 
-  depends_on = [aws_lb_listener.http, aws_lb_listener.https]
+  depends_on = [aws_lb_listener.https]
 }

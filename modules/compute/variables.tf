@@ -55,8 +55,7 @@ variable "app_port" {
 
 variable "certificate_arn" {
   type        = string
-  description = "ACM certificate for the HTTPS listener. Leave null to listen on HTTP 80 (demo without a domain)"
-  default     = null
+  description = "Issued ACM certificate for the HTTPS listener"
 }
 
 variable "image_tag" {
