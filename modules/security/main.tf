@@ -20,6 +20,44 @@ resource "aws_kms_alias" "service_key" {
   target_key_id = each.value.key_id
 }
 
+# The S3 key also lets CloudFront decrypt the static content it serves from the bucket.
+data "aws_caller_identity" "current" {}
+
+data "aws_iam_policy_document" "s3_key" {
+  statement {
+    sid       = "EnableAccountAccess"
+    actions   = ["kms:*"]
+    resources = ["*"]
+
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+  }
+
+  statement {
+    sid       = "AllowCloudFrontDecrypt"
+    actions   = ["kms:Decrypt"]
+    resources = ["*"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["cloudfront.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringLike"
+      variable = "AWS:SourceArn"
+      values   = ["arn:aws:cloudfront::${data.aws_caller_identity.current.account_id}:distribution/*"]
+    }
+  }
+}
+
+resource "aws_kms_key_policy" "s3" {
+  key_id = aws_kms_key.service_key["s3"].id
+  policy = data.aws_iam_policy_document.s3_key.json
+}
+
 # --- Security groups: internet -> alb -> app -> rds / redis ----------------
 
 data "aws_ec2_managed_prefix_list" "cloudfront" {
