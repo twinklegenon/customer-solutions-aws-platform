@@ -29,3 +29,6 @@ domain_name = "customersolutionslab.com"
 # Dev only, for demo: allow a quick destroy.
 alb_deletion_protection = false # best practice: true (block accidental deletion)
 ecr_force_delete        = true  # best practice: false (never delete a repository that has images)
+
+# Version of the application image to run. Push this tag to ECR first, then change it to release a new version.
+app_image_tag = "1.0.0"

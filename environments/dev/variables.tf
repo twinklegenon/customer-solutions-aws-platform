@@ -108,3 +108,9 @@ variable "ecr_force_delete" {
   description = "Delete the ECR repository even when it holds images"
   default     = false
 }
+
+
+variable "app_image_tag" {
+  type        = string
+  description = "Version tag of the application image in ECR that the ECS service runs"
+}
