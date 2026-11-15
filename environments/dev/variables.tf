@@ -90,10 +90,9 @@ variable "db_multi_az" {
 }
 
 
-variable "certificate_arn" {
+variable "domain_name" {
   type        = string
-  description = "ACM certificate for the load balancer HTTPS listener. Null runs HTTP 80 (demo without a domain)"
-  default     = null
+  description = "Registered domain with a public Route 53 hosted zone"
 }
 
 
