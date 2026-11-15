@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ecommerce Services</title>
+  <link rel="stylesheet" href="/assets/app.css">
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <div class="brand">
+        <img src="/static/logo.svg" alt="" width="28" height="28" onerror="this.style.display='none'">
+        <span>Ecommerce Services</span>
+      </div>
+      <nav class="tabs" aria-label="Sections">
+        <button type="button" class="tab" data-tab="catalog">Catalog</button>
+        <button type="button" class="tab" data-tab="cart">Cart (<span id="cart-count">0</span>)</button>
+        <button type="button" class="tab" data-tab="orders">Orders</button>
+        <button type="button" class="tab" data-tab="system">System</button>
+      </nav>
+      <span class="env">{{ env }}</span>
+    </header>
+
+    <p id="message" class="message" role="status" hidden></p>
+
+    <main>
+      <section id="view-catalog" class="view" hidden>
+        <h1>Catalog</h1>
+        <p class="lead">Products stored in PostgreSQL. The list is cached in Redis and cleared when a product changes.</p>
+        <form id="product-form" class="row">
+          <label class="grow2"><span>Product name</span><input id="p-name" required maxlength="120" autocomplete="off"></label>
+          <label class="grow1"><span>Price ($)</span><input id="p-price" required inputmode="decimal" autocomplete="off"></label>
+          <label class="grow1"><span>Stock</span><input id="p-stock" inputmode="numeric" autocomplete="off"></label>
+          <button type="submit" class="primary">Add product</button>
+        </form>
+        <div id="catalog-list" class="panel"></div>
+      </section>
+
+      <section id="view-cart" class="view" hidden>
+        <h1>Cart</h1>
+        <p class="lead">Stored in Redis under your session, so it never touches the database and survives landing on a different task.</p>
+        <div id="cart-list" class="panel"></div>
+        <div id="cart-footer" class="row between" hidden>
+          <strong id="cart-total"></strong>
+          <button type="button" id="checkout" class="primary">Checkout</button>
+        </div>
+      </section>
+
+      <section id="view-orders" class="view" hidden>
+        <h1>Orders</h1>
+        <p class="lead">Stored in PostgreSQL. Change the status or delete an order.</p>
+        <div id="orders-list" class="panel"></div>
+      </section>
+
+      <section id="view-system" class="view" hidden>
+        <div class="row between">
+          <div>
+            <h1>System</h1>
+            <p class="lead">What served the last request and what it touched.</p>
+          </div>
+          <button type="button" id="ping">Send a request</button>
+        </div>
+        <div class="grid">
+          <div class="card">
+            <h2>Served by</h2>
+            <dl class="kv" id="served"></dl>
+          </div>
+          <div class="card">
+            <h2>Request path</h2>
+            <ol class="path" id="path"></ol>
+          </div>
+          <div class="card">
+            <h2>Dependencies</h2>
+            <ul class="deps" id="deps"></ul>
+          </div>
+          <div class="card wide">
+            <h2>Recent requests</h2>
+            <div class="log" id="log"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <p id="meta" class="meta"></p>
+  </div>
+  <script src="/assets/app.js"></script>
+</body>
+</html>
