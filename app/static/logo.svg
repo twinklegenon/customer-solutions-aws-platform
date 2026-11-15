@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" role="img" aria-label="Ecommerce Services">
+  <rect x="1" y="1" width="26" height="26" rx="7" fill="none" stroke="#5c2fc4" stroke-width="2"/>
+  <path d="M7 9h2.5l1.8 8h7.4l1.6-6H11" fill="none" stroke="#5c2fc4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="12" cy="20.5" r="1.4" fill="#5c2fc4"/>
+  <circle cx="18" cy="20.5" r="1.4" fill="#5c2fc4"/>
+</svg>
