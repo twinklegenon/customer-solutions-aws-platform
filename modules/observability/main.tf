@@ -169,8 +169,8 @@ resource "aws_cloudwatch_dashboard" "platform" {
           stat   = "Sum"
           period = 300
           metrics = [
-            ["AWS/WAFV2", "AllowedRequests", "WebACL", var.waf_web_acl_name, "Rule", "ALL", "Region", "Global"],
-            ["AWS/WAFV2", "BlockedRequests", "WebACL", var.waf_web_acl_name, "Rule", "ALL", "Region", "Global"],
+            ["AWS/WAFV2", "AllowedRequests", "WebACL", var.waf_web_acl_name, "Rule", "ALL"],
+            ["AWS/WAFV2", "BlockedRequests", "WebACL", var.waf_web_acl_name, "Rule", "ALL"],
           ]
         }
       },
