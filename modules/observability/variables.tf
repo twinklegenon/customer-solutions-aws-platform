@@ -107,11 +107,11 @@ variable "min_healthy_hosts" {
 
 variable "app_log_group_name" {
   type        = string
-  description = "Application log group that is scanned for ERROR lines"
+  description = "Application log group that is scanned for error lines"
 }
 
 variable "app_errors_threshold" {
   type        = number
-  description = "Alarm when ERROR lines in the application log exceed this number in 5 minutes"
+  description = "Alarm when error lines in the application log exceed this number in 5 minutes"
   default     = 5
 }

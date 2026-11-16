@@ -2,13 +2,6 @@
 # Environment-Specific Resources
 ##################################
 
-# --- ECR repository (the private tasks pull images through the VPC endpoints) ---
-
-resource "aws_ecr_repository" "app" {
-  name         = "${local.name_prefix}-ecr-app"
-  force_delete = var.ecr_force_delete
-}
-
 # --- Application load balancer -----------------------------------------
 
 resource "aws_lb" "alb" {
@@ -151,7 +144,7 @@ resource "aws_ecs_task_definition" "app" {
   container_definitions = jsonencode([
     {
       name      = "app"
-      image     = "${aws_ecr_repository.app.repository_url}:${var.image_tag}"
+      image     = "${local.image_repository_url}:${var.image_tag}"
       essential = true
 
       portMappings = [
