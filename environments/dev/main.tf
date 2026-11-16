@@ -87,6 +87,7 @@ module "compute" {
 
   alb_deletion_protection = var.alb_deletion_protection
   ecr_force_delete        = var.ecr_force_delete
+  alb_logs_force_destroy  = var.s3_force_destroy
 }
 
 module "edge" {
@@ -107,4 +108,23 @@ module "edge" {
   static_bucket_name                 = module.data.static_bucket_name
   static_bucket_arn                  = module.data.static_bucket_arn
   static_bucket_regional_domain_name = module.data.static_bucket_regional_domain_name
+}
+
+module "observability" {
+  source = "../../modules/observability"
+
+  environment = var.environment
+  region      = var.region
+  alarm_email = var.alarm_email
+
+  sns_kms_key_arn            = module.security.kms_key_arns["sns"]
+  alb_arn_suffix             = module.compute.alb_arn_suffix
+  target_group_arn_suffix    = module.compute.target_group_arn_suffix
+  ecs_cluster_name           = module.compute.ecs_cluster_name
+  ecs_service_name           = module.compute.ecs_service_name
+  app_log_group_name         = module.compute.app_log_group_name
+  db_instance_identifier     = module.data.db_identifier
+  redis_replication_group_id = module.data.redis_replication_group_id
+  cloudfront_distribution_id = module.edge.distribution_id
+  waf_web_acl_name           = module.edge.web_acl_name
 }

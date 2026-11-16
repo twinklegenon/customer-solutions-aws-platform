@@ -110,3 +110,9 @@ variable "s3_force_destroy" {
   description = "Delete the static bucket even when it holds objects (true only for dev)"
   default     = false
 }
+
+variable "log_retention_days" {
+  type        = number
+  description = "Retention in days for the database log group"
+  default     = 30
+}

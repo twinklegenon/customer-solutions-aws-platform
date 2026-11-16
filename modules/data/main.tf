@@ -37,6 +37,15 @@ resource "aws_db_instance" "postgres" {
   backup_retention_period = var.db_backup_retention_days
   skip_final_snapshot     = var.db_skip_final_snapshot
   deletion_protection     = var.db_deletion_protection
+
+  enabled_cloudwatch_logs_exports = ["postgresql"]
+  depends_on                      = [aws_cloudwatch_log_group.rds]
+}
+
+# Created here (not by RDS) so the retention is set and destroy removes it.
+resource "aws_cloudwatch_log_group" "rds" {
+  name              = "/aws/rds/instance/${local.name_prefix}-rds/postgresql"
+  retention_in_days = var.log_retention_days
 }
 
 # --- Redis cache -------------------------------------------------------

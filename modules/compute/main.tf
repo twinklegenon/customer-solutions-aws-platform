@@ -19,6 +19,65 @@ resource "aws_lb" "alb" {
   security_groups    = [var.alb_security_group_id]
 
   enable_deletion_protection = var.alb_deletion_protection
+
+  access_logs {
+    bucket  = aws_s3_bucket.alb_logs.id
+    enabled = true
+  }
+
+  depends_on = [aws_s3_bucket_policy.alb_logs]
+}
+
+# --- ALB access logs (S3, because the load balancer cannot write them to CloudWatch) ---
+
+data "aws_caller_identity" "current" {}
+
+data "aws_elb_service_account" "current" {}
+
+resource "aws_s3_bucket" "alb_logs" {
+  bucket        = "${local.name_prefix}-s3-alb-logs-${data.aws_caller_identity.current.account_id}"
+  force_destroy = var.alb_logs_force_destroy
+}
+
+resource "aws_s3_bucket_public_access_block" "alb_logs" {
+  bucket = aws_s3_bucket.alb_logs.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "alb_logs" {
+  bucket = aws_s3_bucket.alb_logs.id
+
+  rule {
+    id     = "expire-logs"
+    status = "Enabled"
+
+    filter {}
+
+    expiration {
+      days = var.log_retention_days
+    }
+  }
+}
+
+data "aws_iam_policy_document" "alb_logs" {
+  statement {
+    actions   = ["s3:PutObject"]
+    resources = ["${aws_s3_bucket.alb_logs.arn}/AWSLogs/${data.aws_caller_identity.current.account_id}/*"]
+
+    principals {
+      type        = "AWS"
+      identifiers = [data.aws_elb_service_account.current.arn]
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "alb_logs" {
+  bucket = aws_s3_bucket.alb_logs.id
+  policy = data.aws_iam_policy_document.alb_logs.json
 }
 
 resource "aws_lb_target_group" "app" {
