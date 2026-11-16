@@ -66,10 +66,12 @@ module "compute" {
   db_secret_arn            = module.data.db_master_secret_arn
   secrets_kms_key_arn      = module.security.kms_key_arns["secrets"]
   health_check_path        = "/health"
+  image_repository_name    = var.app_image_repository
   image_tag                = var.app_image_tag
 
   container_environment = {
     APP_ENV       = var.environment
+    PORT          = "8080"
     DB_HOST       = module.data.db_address
     DB_PORT       = tostring(module.data.db_port)
     DB_NAME       = module.data.db_name
@@ -86,7 +88,6 @@ module "compute" {
   ]
 
   alb_deletion_protection = var.alb_deletion_protection
-  ecr_force_delete        = var.ecr_force_delete
   alb_logs_force_destroy  = var.s3_force_destroy
 }
 

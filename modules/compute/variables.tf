@@ -94,10 +94,9 @@ variable "alb_deletion_protection" {
   default     = true
 }
 
-variable "ecr_force_delete" {
-  type        = bool
-  description = "Delete the ECR repository even when it holds images (true only for dev)"
-  default     = false
+variable "image_repository_name" {
+  type        = string
+  description = "Name of the existing ECR repository that holds the application image"
 }
 
 variable "log_retention_days" {
