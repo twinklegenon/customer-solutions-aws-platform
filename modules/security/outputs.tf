@@ -3,7 +3,7 @@
 ##################################
 
 output "kms_key_arns" {
-  description = "KMS key ARNs, keyed by service (rds, redis, s3, secrets)"
+  description = "KMS key ARNs, keyed by service (rds, redis, s3, secrets, sns)"
   value       = { for name, key in aws_kms_key.service_key : name => key.arn }
 }
 

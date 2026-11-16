@@ -87,6 +87,51 @@ resource "aws_wafv2_web_acl" "cloudfront" {
   }
 }
 
+# --- WAF logs: CloudWatch log group in us-east-1 (the name must start with aws-waf-logs-) ---
+
+data "aws_caller_identity" "current" {}
+
+resource "aws_cloudwatch_log_group" "waf" {
+  provider = aws.us_east_1
+
+  name              = "aws-waf-logs-${local.name_prefix}-cloudfront"
+  retention_in_days = var.log_retention_days
+}
+
+data "aws_iam_policy_document" "waf_logs" {
+  statement {
+    actions   = ["logs:CreateLogStream", "logs:PutLogEvents"]
+    resources = ["${aws_cloudwatch_log_group.waf.arn}:*"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["delivery.logs.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:SourceAccount"
+      values   = [data.aws_caller_identity.current.account_id]
+    }
+  }
+}
+
+resource "aws_cloudwatch_log_resource_policy" "waf" {
+  provider = aws.us_east_1
+
+  policy_name     = "${local.name_prefix}-waf-logs"
+  policy_document = data.aws_iam_policy_document.waf_logs.json
+}
+
+resource "aws_wafv2_web_acl_logging_configuration" "cloudfront" {
+  provider = aws.us_east_1
+
+  resource_arn            = aws_wafv2_web_acl.cloudfront.arn
+  log_destination_configs = [aws_cloudwatch_log_group.waf.arn]
+
+  depends_on = [aws_cloudwatch_log_resource_policy.waf]
+}
+
 # --- CloudFront --------------------------------------------------------
 
 # Lets CloudFront read the private static bucket; nothing else can.

@@ -46,3 +46,13 @@ output "db_name" {
   description = "Name of the initial database"
   value       = aws_db_instance.postgres.db_name
 }
+
+output "db_identifier" {
+  description = "RDS instance identifier"
+  value       = aws_db_instance.postgres.identifier
+}
+
+output "redis_replication_group_id" {
+  description = "ElastiCache replication group ID"
+  value       = aws_elasticache_replication_group.redis.replication_group_id
+}

@@ -31,3 +31,13 @@ output "app_log_group_name" {
   description = "CloudWatch log group of the application"
   value       = aws_cloudwatch_log_group.app.name
 }
+
+output "alb_arn_suffix" {
+  description = "Load balancer ARN suffix, the CloudWatch dimension value"
+  value       = aws_lb.alb.arn_suffix
+}
+
+output "target_group_arn_suffix" {
+  description = "Target group ARN suffix, the CloudWatch dimension value"
+  value       = aws_lb_target_group.app.arn_suffix
+}

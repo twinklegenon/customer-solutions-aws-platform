@@ -114,3 +114,9 @@ variable "app_image_tag" {
   type        = string
   description = "Version tag of the application image in ECR that the ECS service runs"
 }
+
+variable "alarm_email" {
+  type        = string
+  description = "Email address for alarm notifications; set through the TF_VAR_alarm_email CI/CD variable, not in the repo"
+  sensitive   = true
+}

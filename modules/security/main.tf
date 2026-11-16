@@ -5,7 +5,7 @@
 # --- KMS keys (one per service, so each can be granted access separately) ---
 
 resource "aws_kms_key" "service_key" {
-  for_each = toset(["rds", "redis", "s3", "secrets"])
+  for_each = toset(["rds", "redis", "s3", "secrets", "sns"])
 
   description         = "${local.name_prefix} ${each.key} encryption key"
   enable_key_rotation = true
@@ -56,6 +56,53 @@ data "aws_iam_policy_document" "s3_key" {
 resource "aws_kms_key_policy" "s3" {
   key_id = aws_kms_key.service_key["s3"].id
   policy = data.aws_iam_policy_document.s3_key.json
+}
+
+# The SNS key lets CloudWatch alarms and RDS events publish to the encrypted alarm topic.
+data "aws_iam_policy_document" "sns_key" {
+  statement {
+    sid       = "EnableAccountAccess"
+    actions   = ["kms:*"]
+    resources = ["*"]
+
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+  }
+
+  statement {
+    sid       = "AllowCloudWatchAlarms"
+    actions   = ["kms:Decrypt", "kms:GenerateDataKey*"]
+    resources = ["*"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["cloudwatch.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:SourceAccount"
+      values   = [data.aws_caller_identity.current.account_id]
+    }
+  }
+
+  statement {
+    sid       = "AllowRdsEvents"
+    actions   = ["kms:Decrypt", "kms:GenerateDataKey*"]
+    resources = ["*"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["events.rds.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_kms_key_policy" "sns" {
+  key_id = aws_kms_key.service_key["sns"].id
+  policy = data.aws_iam_policy_document.sns_key.json
 }
 
 # --- Security groups: internet -> alb -> app -> rds / redis ----------------
