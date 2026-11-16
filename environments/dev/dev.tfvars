@@ -31,4 +31,4 @@ alb_deletion_protection = false # best practice: true (block accidental deletion
 
 # ECR repository (created manually, outside Terraform) and the version tag of the application image to run.
 app_image_repository = "dev-ecr-app"
-app_image_tag        = "1.0.0"
+app_image_tag        = "1.0.1"
