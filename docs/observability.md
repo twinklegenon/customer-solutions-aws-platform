@@ -12,7 +12,7 @@ Module: `modules/observability`, plus log settings in the compute, data and edge
 | RDS | CPU, connections, free storage | 3, plus failover events | `/aws/rds/instance/dev-rds/postgresql` |
 | Redis | Engine CPU, memory | 2 | none |
 | Network | none | none | `/dev/vpc/flow-logs` |
-| Application | ERROR line count | 1 | `/dev/ecs/app` |
+| Application | Error line count | 1 | `/dev/ecs/app` |
 
 ## Notifications
 
@@ -33,7 +33,7 @@ Alarm names are `dev-alarm-<service>-<what>`. Each evaluates 5-minute periods an
 | `rds-free-storage` | Under 5 GiB |
 | `rds-connections` | Over 80 |
 | `redis-cpu`, `redis-memory` | Over 80% |
-| `app-errors` | More than 5 ERROR lines in the app log (metric filter on `/dev/ecs/app`) |
+| `app-errors` | More than 5 log lines containing ERROR, Error or error (metric filter on `/dev/ecs/app`) |
 
 An RDS event subscription also sends **failover** and **failure** events to the same topic.
 

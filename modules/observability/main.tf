@@ -39,12 +39,12 @@ resource "aws_cloudwatch_metric_alarm" "alarm" {
   ok_actions    = [aws_sns_topic.alarms.arn]
 }
 
-# --- Application errors: count ERROR lines in the app log (alarm app-errors) ---
+# --- Application errors: count error lines in the app log (alarm app-errors) ---
 
 resource "aws_cloudwatch_log_metric_filter" "app_errors" {
   name           = "${local.name_prefix}-app-errors"
   log_group_name = var.app_log_group_name
-  pattern        = "ERROR"
+  pattern        = "?ERROR ?Error ?error"
 
   metric_transformation {
     name          = "ErrorCount"

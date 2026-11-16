@@ -69,7 +69,7 @@ locals {
       missing     = "notBreaching"
     }
     app-errors = {
-      description = "Application logs ERROR lines"
+      description = "Application logs error lines"
       namespace   = "${local.name_prefix}/app"
       metric      = "ErrorCount"
       statistic   = "Sum"
