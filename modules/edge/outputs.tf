@@ -16,3 +16,8 @@ output "app_url" {
   description = "URL users visit"
   value       = "https://${var.app_domain}"
 }
+
+output "web_acl_name" {
+  description = "Name of the CloudFront web ACL"
+  value       = aws_wafv2_web_acl.cloudfront.name
+}

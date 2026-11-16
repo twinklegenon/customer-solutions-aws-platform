@@ -21,6 +21,7 @@ One key per service, so each can be granted access separately. Rotation is on.
 | `dev-kms-redis` | `alias/dev-kms-redis` | Redis at rest |
 | `dev-kms-s3` | `alias/dev-kms-s3` | S3 static bucket |
 | `dev-kms-secrets` | `alias/dev-kms-secrets` | Secrets Manager secrets |
+| `dev-kms-sns` | `alias/dev-kms-sns` | Alarm notification topic |
 
 ## Security groups
 

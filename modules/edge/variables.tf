@@ -63,3 +63,9 @@ variable "rate_limit" {
   description = "Maximum requests from one IP address in 5 minutes before WAF blocks it"
   default     = 2000
 }
+
+variable "log_retention_days" {
+  type        = number
+  description = "Retention in days for the WAF log group"
+  default     = 30
+}

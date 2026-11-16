@@ -135,3 +135,9 @@ variable "container_secrets" {
   description = "Secrets Manager values injected into the container as environment variables"
   default     = []
 }
+
+variable "alb_logs_force_destroy" {
+  type        = bool
+  description = "Delete the access log bucket even when it holds logs"
+  default     = false
+}
