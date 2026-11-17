@@ -4,6 +4,12 @@ environment = "dev"
 owner       = "devops"
 cost_center = "cc-devops-shared"
 
+# Workload tags (Task Manager). The platform keeps owner and cost_center above, with Service = shared.
+# Identity, CRM and Ecommerce get their own values when those workloads are onboarded.
+service              = "web"
+workload_owner       = "web"
+workload_cost_center = "cc-web"
+
 vpc_cidr = "10.10.0.0/16"
 
 region = "ap-southeast-1"

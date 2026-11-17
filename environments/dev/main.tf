@@ -23,6 +23,10 @@ module "security" {
 module "data" {
   source = "../../modules/data"
 
+  providers = {
+    aws = aws.workload
+  }
+
   environment             = var.environment
   data_subnet_ids         = module.networking.private_data_subnet_ids
   kms_key_arns            = module.security.kms_key_arns
@@ -50,6 +54,10 @@ module "dns" {
 
 module "compute" {
   source = "../../modules/compute"
+
+  providers = {
+    aws = aws.workload
+  }
 
   environment             = var.environment
   region                  = var.region

@@ -141,3 +141,18 @@ variable "dr_subnets" {
   type        = map(string)
   description = "Private data subnet CIDRs in the DR region, keyed by availability zone name"
 }
+
+variable "service" {
+  type        = string
+  description = "Service area that owns the workload (web, identity, crm, ecommerce); platform resources use shared"
+}
+
+variable "workload_owner" {
+  type        = string
+  description = "Owning team alias of the workload resources"
+}
+
+variable "workload_cost_center" {
+  type        = string
+  description = "Cost center of the workload for show-back/charge-back"
+}
