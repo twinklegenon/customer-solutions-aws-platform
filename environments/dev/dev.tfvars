@@ -34,7 +34,7 @@ app_image_repository = "dev-ecr-app"
 app_image_tag        = "1.0.1"
 
 # Disaster recovery (pilot light): a read replica in a second region. Turn it on only for a demo window.
-enable_dr   = false
+enable_dr   = true
 dr_region   = "ap-southeast-2"
 dr_vpc_cidr = "10.20.0.0/16"
 dr_subnets = {
