@@ -26,6 +26,16 @@ provider "aws" {
   region = var.dr_region
 
   default_tags {
-    tags = local.common_tags
+    tags = local.workload_tags
+  }
+}
+
+# Workload resources (compute and data) are tagged with the owning team.
+provider "aws" {
+  alias  = "workload"
+  region = var.region
+
+  default_tags {
+    tags = local.workload_tags
   }
 }
