@@ -212,6 +212,41 @@ resource "aws_cloudfront_distribution" "cdn" {
     compress               = true
   }
 
+  # /errors/* is served from S3. It holds the page CloudFront shows when the application cannot answer.
+  # CachingOptimized follows the Cache-Control that the upload sets, so an edited page appears quickly.
+  ordered_cache_behavior {
+    path_pattern           = "/errors/*"
+    target_origin_id       = "s3-static"
+    viewer_protocol_policy = "redirect-to-https"
+    allowed_methods        = ["GET", "HEAD"]
+    cached_methods         = ["GET", "HEAD"]
+    cache_policy_id        = "658327ea-f89d-4fab-a63d-7e88639e58f6"
+    compress               = true
+  }
+
+  # Gateway errors from the load balancer (no healthy tasks, a timeout) show the error page.
+  # The status code stays the same, so monitoring still sees the failure.
+  custom_error_response {
+    error_code            = 502
+    response_code         = 502
+    response_page_path    = "/errors/error.html"
+    error_caching_min_ttl = 10
+  }
+
+  custom_error_response {
+    error_code            = 503
+    response_code         = 503
+    response_page_path    = "/errors/error.html"
+    error_caching_min_ttl = 10
+  }
+
+  custom_error_response {
+    error_code            = 504
+    response_code         = 504
+    response_page_path    = "/errors/error.html"
+    error_caching_min_ttl = 10
+  }
+
   restrictions {
     geo_restriction {
       restriction_type = "none"
