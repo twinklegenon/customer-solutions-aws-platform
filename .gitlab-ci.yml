@@ -1,7 +1,13 @@
+# Promotion order: dev, then stage, then prod (same commit, same modules).
+# Dev runs today. Stage and prod are manual until their AWS accounts and role variables exist.
 stages:
   - validate
-  - plan
-  - apply
+  - plan-dev
+  - apply-dev
+  - plan-stage
+  - apply-stage
+  - plan-prod
+  - apply-prod
   - destroy
 
 # Gets short-lived AWS credentials from GitLab's OIDC token (no stored keys).
@@ -14,6 +20,12 @@ stages:
     - echo "$GITLAB_OIDC_TOKEN" > /tmp/web_identity_token
     - export AWS_WEB_IDENTITY_TOKEN_FILE=/tmp/web_identity_token
 
+# Terraform image shared by the stage and prod jobs.
+.terraform:
+  image:
+    name: hashicorp/terraform:1.15
+    entrypoint: [""]
+
 # --- validate stage: no AWS access needed ---------------------------------
 
 # Runs on merge requests and manual runs. Not after the merge: plan-dev already
@@ -25,9 +37,10 @@ validate:
     entrypoint: [""]
   script:
     - terraform fmt -check -recursive
-    - cd environments/dev
-    - terraform init -backend=false -input=false
-    - terraform validate
+    - |
+      for env in dev stage prod; do
+        (cd environments/$env && terraform init -backend=false -input=false && terraform validate)
+      done
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_PIPELINE_SOURCE == "web"
@@ -58,7 +71,7 @@ checkov:
 # use the main-only role. -lock=false so the role needs no write access to the state bucket.
 plan-dev-mr:
   extends: .aws-auth
-  stage: plan
+  stage: plan-dev
   image:
     name: hashicorp/terraform:1.15
     entrypoint: [""]
@@ -74,7 +87,7 @@ plan-dev-mr:
 # Saves the plan as an artifact that expires after 30 minutes; apply-dev applies this exact plan.
 plan-dev:
   extends: .aws-auth
-  stage: plan
+  stage: plan-dev
   image:
     name: hashicorp/terraform:1.15
     entrypoint: [""]
@@ -96,7 +109,7 @@ plan-dev:
 # resource_group stops two dev jobs from running at the same time.
 apply-dev:
   extends: .aws-auth
-  stage: apply
+  stage: apply-dev
   image:
     name: hashicorp/terraform:1.15
     entrypoint: [""]
@@ -105,6 +118,92 @@ apply-dev:
     - plan-dev
   script:
     - cd environments/dev
+    - terraform init -input=false
+    - terraform apply -input=false tfplan
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual
+      allow_failure: true
+
+# --- stage and prod (manual) ------------------------------------------------
+# Same jobs as dev, with the stage or prod folder and values. Each environment has its own role
+# variable (AWS_ROLE_ARN_STAGE, AWS_ROLE_ARN_PROD), so a job can never fall back to the dev role:
+# it stops when the variable is not set. Prod is meant to be a protected environment in GitLab
+# with required approvers.
+
+plan-stage:
+  extends: [.aws-auth, .terraform]
+  stage: plan-stage
+  environment:
+    name: stage
+    action: prepare
+  script:
+    - 'test -n "$AWS_ROLE_ARN_STAGE" || { echo "AWS_ROLE_ARN_STAGE is not set"; exit 1; }'
+    - export AWS_ROLE_ARN="$AWS_ROLE_ARN_STAGE"
+    - cd environments/stage
+    - terraform init -input=false
+    - terraform plan -input=false -var-file=stage.tfvars -out=tfplan
+  artifacts:
+    paths:
+      - environments/stage/tfplan
+    expire_in: 30 minutes
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual
+      allow_failure: true
+
+apply-stage:
+  extends: [.aws-auth, .terraform]
+  stage: apply-stage
+  environment:
+    name: stage
+  resource_group: stage
+  dependencies:
+    - plan-stage
+  script:
+    - 'test -n "$AWS_ROLE_ARN_STAGE" || { echo "AWS_ROLE_ARN_STAGE is not set"; exit 1; }'
+    - export AWS_ROLE_ARN="$AWS_ROLE_ARN_STAGE"
+    - cd environments/stage
+    - terraform init -input=false
+    - terraform apply -input=false tfplan
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual
+      allow_failure: true
+
+plan-prod:
+  extends: [.aws-auth, .terraform]
+  stage: plan-prod
+  environment:
+    name: prod
+    action: prepare
+  script:
+    - 'test -n "$AWS_ROLE_ARN_PROD" || { echo "AWS_ROLE_ARN_PROD is not set"; exit 1; }'
+    - export AWS_ROLE_ARN="$AWS_ROLE_ARN_PROD"
+    - cd environments/prod
+    - terraform init -input=false
+    - terraform plan -input=false -var-file=prod.tfvars -out=tfplan
+  artifacts:
+    paths:
+      - environments/prod/tfplan
+    expire_in: 30 minutes
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual
+      allow_failure: true
+
+apply-prod:
+  extends: [.aws-auth, .terraform]
+  stage: apply-prod
+  environment:
+    name: prod
+  resource_group: prod
+  dependencies:
+    - plan-prod
+  script:
+    - 'test -n "$AWS_ROLE_ARN_PROD" || { echo "AWS_ROLE_ARN_PROD is not set"; exit 1; }'
+    - export AWS_ROLE_ARN="$AWS_ROLE_ARN_PROD"
+    - cd environments/prod
     - terraform init -input=false
     - terraform apply -input=false tfplan
   rules:
