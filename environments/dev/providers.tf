@@ -19,3 +19,13 @@ provider "aws" {
     tags = local.common_tags
   }
 }
+
+# Disaster recovery region (pilot light replica).
+provider "aws" {
+  alias  = "dr"
+  region = var.dr_region
+
+  default_tags {
+    tags = local.common_tags
+  }
+}

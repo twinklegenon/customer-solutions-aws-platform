@@ -119,3 +119,25 @@ variable "alarm_email" {
   description = "Email address for alarm notifications; set through the TF_VAR_alarm_email CI/CD variable, not in the repo"
   sensitive   = true
 }
+
+variable "enable_dr" {
+  type        = bool
+  description = "Create the cross-region read replica (disaster recovery, pilot light)"
+  default     = false
+}
+
+variable "dr_region" {
+  type        = string
+  description = "Disaster recovery region"
+  default     = "ap-southeast-2"
+}
+
+variable "dr_vpc_cidr" {
+  type        = string
+  description = "CIDR block of the DR VPC (must not overlap the primary VPC)"
+}
+
+variable "dr_subnets" {
+  type        = map(string)
+  description = "Private data subnet CIDRs in the DR region, keyed by availability zone name"
+}

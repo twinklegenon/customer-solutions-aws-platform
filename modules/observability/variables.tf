@@ -115,3 +115,15 @@ variable "app_errors_threshold" {
   description = "Alarm when error lines in the application log exceed this number in 5 minutes"
   default     = 5
 }
+
+variable "dr_region" {
+  type        = string
+  description = "Disaster recovery region, used by the replica lag widget"
+  default     = ""
+}
+
+variable "dr_replica_identifier" {
+  type        = string
+  description = "Identifier of the DR read replica; empty hides the replica lag widget"
+  default     = ""
+}

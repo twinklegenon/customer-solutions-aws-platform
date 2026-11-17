@@ -70,7 +70,7 @@ resource "aws_cloudwatch_dashboard" "platform" {
   dashboard_name = "${local.name_prefix}-dashboard-platform"
 
   dashboard_body = jsonencode({
-    widgets = [
+    widgets = concat([
       {
         type = "metric", x = 0, y = 0, width = 12, height = 6
         properties = {
@@ -186,6 +186,6 @@ resource "aws_cloudwatch_dashboard" "platform" {
           ]
         }
       },
-    ]
+    ], local.dr_widgets)
   })
 }

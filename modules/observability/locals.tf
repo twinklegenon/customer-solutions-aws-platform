@@ -26,6 +26,22 @@ locals {
   rds_dimensions   = { DBInstanceIdentifier = var.db_instance_identifier }
   redis_dimensions = { CacheClusterId = local.redis_node_id }
 
+  # Replica lag widget, shown only when a DR replica exists (its metrics live in the DR region).
+  dr_widgets = var.dr_replica_identifier == "" ? [] : [
+    {
+      type = "metric", x = 12, y = 24, width = 12, height = 6
+      properties = {
+        title  = "DR replica lag (seconds)"
+        region = var.dr_region
+        stat   = "Maximum"
+        period = 300
+        metrics = [
+          ["AWS/RDS", "ReplicaLag", "DBInstanceIdentifier", var.dr_replica_identifier],
+        ]
+      }
+    },
+  ]
+
   # One entry per alarm; the resource below turns each into a CloudWatch alarm.
   alarms = {
     alb-5xx = {
