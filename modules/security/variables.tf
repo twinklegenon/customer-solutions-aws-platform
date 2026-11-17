@@ -24,8 +24,8 @@ variable "vpc_cidr" {
 
 variable "app_port" {
   type        = number
-  description = "Port the application container listens on"
-  default     = 8080
+  description = "Port the application container listens on (HTTPS)"
+  default     = 8443
 }
 
 variable "db_port" {

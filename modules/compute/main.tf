@@ -77,12 +77,14 @@ resource "aws_lb_target_group" "app" {
   name        = "${local.name_prefix}-tg-app"
   vpc_id      = var.vpc_id
   port        = var.app_port
-  protocol    = "HTTP"
+  protocol    = "HTTPS"
   target_type = "ip"
 
+  # The load balancer encrypts the last hop. It does not check the container's certificate.
   health_check {
-    path    = var.health_check_path
-    matcher = "200-399"
+    protocol = "HTTPS"
+    path     = var.health_check_path
+    matcher  = "200-399"
   }
 }
 
