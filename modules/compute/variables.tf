@@ -84,8 +84,26 @@ variable "task_memory" {
 
 variable "desired_count" {
   type        = number
-  description = "Number of tasks, spread across the AZs"
+  description = "Number of tasks at the first deploy, spread across the AZs (auto scaling changes it afterwards)"
   default     = 2
+}
+
+variable "min_tasks" {
+  type        = number
+  description = "Fewest tasks auto scaling keeps running (2 keeps one per AZ)"
+  default     = 2
+}
+
+variable "max_tasks" {
+  type        = number
+  description = "Most tasks auto scaling can run"
+  default     = 4
+}
+
+variable "cpu_target_percent" {
+  type        = number
+  description = "Average CPU the service scales to hold"
+  default     = 60
 }
 
 variable "alb_deletion_protection" {

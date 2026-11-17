@@ -33,6 +33,8 @@ db_deletion_protection = true
 s3_force_destroy       = false
 
 # Compute (module.compute)
+ecs_min_tasks           = 2 # one per AZ
+ecs_max_tasks           = 6
 alb_deletion_protection = true
 
 # ECR repository of the prod account (created manually) and the image version to run.
