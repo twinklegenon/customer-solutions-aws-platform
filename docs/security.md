@@ -67,10 +67,22 @@ Both roles can be assumed only by `ecs-tasks.amazonaws.com`.
 | Application port | 8080 | `app_port` |
 | Redis port | 6379 | Rule definitions in the module |
 
+## WAF at the edge
+
+One web ACL, `dev-waf-cloudfront`, is attached to the CloudFront distribution, so it covers both the dynamic requests and the static content from S3. It is created in us-east-1, the only region where a CloudFront web ACL can exist.
+
+| Priority | Rule | What it does |
+|---|---|---|
+| 1 | `aws-common` (AWS managed Common rule set) | Blocks common web attacks: cross-site scripting, path traversal, bad bots and others |
+| 2 | `aws-known-bad-inputs` (AWS managed) | Blocks request patterns known to exploit vulnerabilities, such as probes for `.env` files |
+| 3 | `rate-limit` | Blocks an IP address that sends more than the limit in 5 minutes (`rate_limit`, default 2000) |
+| 4 | `aws-sqli` (AWS managed SQL database rule group) | Blocks SQL injection patterns in the query string, body, headers, cookies and path |
+
+The application also uses parameterised queries, so the SQL rule group is a second layer. Requests are logged to CloudWatch Logs (`aws-waf-logs-dev-cloudfront`).
+
 ## Not included yet
 
 | Item | Why | When |
 |---|---|---|
 | Secrets read access for the execution role | No secret exists yet | `data` module, when RDS creates its managed secret |
 | KMS key for CloudWatch Logs | Needs a key policy, and no log group is encrypted yet | When log groups are encrypted |
-| WAF and TLS certificates | Attach to CloudFront and the ALB | Edge layer |
