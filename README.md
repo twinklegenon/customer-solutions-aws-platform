@@ -39,7 +39,7 @@ PRIMARY REGION (ap-southeast-1)                             | HTTPS to the conta
 DR REGION (ap-southeast-2)                                       RDS read replica
 ```
 
-The application is a separate repository (`sample-app`). Its pipeline pushes a versioned image to ECR and uploads the static files to S3. This repo only runs the image it is told to run (`app_image_tag`).
+The application is the Task Manager app, in a separate repository: [sample-app](https://gitlab.com/devops-lab6555046/sample-app). Its pipeline pushes a versioned image to ECR and uploads the static files to S3. This repo only runs the image it is told to run (`app_image_tag`).
 
 ## Repository layout
 
@@ -124,6 +124,10 @@ Stages: `validate`, `plan-dev`, `apply-dev`, `plan-stage`, `apply-stage`, `plan-
 - `main`: plan, then a manual apply for dev. Stage and prod plan and apply are manual and fail with a clear message until their own role variable is set.
 - `destroy-dev` is manual and exists for demo windows.
 - Rollback: infrastructure by Git tag, application by `app_image_tag`.
+
+## Next steps
+
+- **ECS auto scaling**: scale the number of tasks with load (target tracking on CPU or requests per target). Not added yet; the service runs a fixed number of tasks across two AZs.
 
 ## Deliverables
 
