@@ -37,7 +37,7 @@ alb_deletion_protection = false # dev only. best practice: true (block accidenta
 
 # ECR repository (created manually, outside Terraform) and the image version to run.
 app_image_repository = "dev-ecr-app"
-app_image_tag        = "1.0.1"
+app_image_tag        = "1.0.2"
 
 # DNS and edge: users visit app.<domain>; CloudFront reaches the load balancer at origin.<domain>.
 domain_name = "customersolutionslab.com"

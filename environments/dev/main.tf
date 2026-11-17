@@ -79,7 +79,7 @@ module "compute" {
 
   container_environment = {
     APP_ENV       = var.environment
-    PORT          = "8080"
+    PORT          = "8443"
     DB_HOST       = module.data.db_address
     DB_PORT       = tostring(module.data.db_port)
     DB_NAME       = module.data.db_name

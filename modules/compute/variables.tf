@@ -49,8 +49,8 @@ variable "task_role_arn" {
 
 variable "app_port" {
   type        = number
-  description = "Port the application container listens on"
-  default     = 8080
+  description = "Port the application container listens on (HTTPS)"
+  default     = 8443
 }
 
 variable "certificate_arn" {
