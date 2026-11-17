@@ -28,9 +28,10 @@ db_allocated_storage = 20
 db_multi_az          = true
 
 # Dev only, for demo: allow a quick destroy. Best practice (stage and prod) is the opposite.
-db_skip_final_snapshot = true  # best practice: false (keep a final snapshot)
-db_deletion_protection = false # best practice: true (block accidental deletion)
-s3_force_destroy       = true  # best practice: false (never delete a bucket that has objects)
+db_skip_final_snapshot      = true  # best practice: false (keep a final snapshot)
+db_deletion_protection      = false # best practice: true (block accidental deletion)
+s3_force_destroy            = true  # best practice: false (never delete a bucket that has objects)
+secret_recovery_window_days = 0     # best practice: 7 (a deleted secret can be recovered)
 
 # Compute (module.compute)
 alb_deletion_protection = false # dev only. best practice: true (block accidental deletion)

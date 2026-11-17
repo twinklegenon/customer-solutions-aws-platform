@@ -120,7 +120,7 @@ The brief asks for centralised secrets and keys. The design separates **central 
 |---|---|
 | Where do workload keys live? | In the workload's own account, one customer-managed key per service, as built today (`rds`, `redis`, `s3`, `secrets`, `sns`). Data stays encrypted by a key in its own isolation boundary, so one compromised account does not expose another |
 | Who controls them centrally? | Key policies allow the account and one `security-admin` role. The SCP above blocks deletion for everyone else. IAM Access Analyzer reports any cross-account access |
-| Where do workload secrets live? | In the workload account. The database password is created and rotated by RDS in the account that owns the database, never in code or state |
+| Where do workload secrets live? | In the workload account. The database password is generated at apply time and stored in Secrets Manager in the account that owns the database, never in code or state. It is not rotated automatically yet |
 | What is stored centrally? | The shared services account holds only what several accounts need: shared secrets (for example third-party credentials) and the keys that encrypt them |
 | How does another account read a central secret? | Three things together, from the AWS documentation ([AWS: cross-account secrets](https://docs.aws.amazon.com/secretsmanager/latest/userguide/auth-and-access_examples_cross.html)): a resource policy on the secret, an identity policy on the reading role, and a key policy that lets that role decrypt |
 | Which key encrypts a shared secret? | A customer-managed key. AWS states that the default `aws/secretsmanager` key cannot be used for cross-account access |
