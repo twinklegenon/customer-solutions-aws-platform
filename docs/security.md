@@ -39,8 +39,8 @@ Rules reference other security groups, not IP addresses.
 | Rule | Direction | Allows | Purpose |
 |---|---|---|---|
 | ALB from CloudFront | In to `alb` | `alb_port` from the CloudFront prefix list (443 with a certificate, 80 without) | Only CloudFront can reach the load balancer |
-| ALB to app | Out of `alb` | 8080 to `app` | The ALB forwards only to the application |
-| App from ALB | In to `app` | 8080 from `alb` | The app accepts traffic only from the load balancer |
+| ALB to app | Out of `alb` | 8443 to `app` | The ALB forwards only to the application |
+| App from ALB | In to `app` | 8443 from `alb` | The app accepts traffic only from the load balancer |
 | App to database | Out of `app` | 5432 to `rds` | Application reaches the database |
 | App to Redis | Out of `app` | 6379 to `redis` | Application reaches the cache |
 | App to VPC endpoints | Out of `app` | 443 to the VPC CIDR | ECR, CloudWatch Logs and Secrets Manager |
@@ -64,8 +64,22 @@ Both roles can be assumed only by `ecs-tasks.amazonaws.com`.
 | Item | Value | Where to change |
 |---|---|---|
 | Database engine | PostgreSQL | `db_port` (5432) |
-| Application port | 8080 | `app_port` |
+| Application port | 8443 (HTTPS) | `app_port` |
 | Redis port | 6379 | Rule definitions in the module |
+
+## TLS end to end
+
+Every hop of a request is encrypted.
+
+| Hop | How |
+|---|---|
+| Browser to CloudFront | TLS 1.3, certificate for the app domain |
+| CloudFront to the load balancer | HTTPS only, certificate for the origin domain |
+| Load balancer to the container | HTTPS on port 8443. The target group and its health check use HTTPS. The container makes a self-signed certificate when it starts, and the load balancer does not check it, so no certificate authority is needed |
+| Container to the database | TLS required by PostgreSQL |
+| Container to Redis | TLS in transit |
+
+Because the load balancer does not check the container's certificate, the security group that admits only the load balancer is what prevents another host from taking the container's place.
 
 ## WAF at the edge
 
