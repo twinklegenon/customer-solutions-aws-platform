@@ -21,91 +21,116 @@ The estate has these characteristics, and the design has to respect them:
 | Environments | Dev, Stage and Prod are kept consistent. |
 | Operations & resilience | Actionable dashboards, metrics and alarms, plus a DR strategy for in-scope services. |
 
-## The task
-
-Build the system below as IaC, and present the implementation approach in a talk of **20 minutes or less**, leaving time for questions. The presentation should show how the approach and experience fit the role. After the interview, send the presentation and this repo for review.
-
-### Target architecture
+## Architecture
 
 ```
-Route 53 -> CloudFront -+-> (static content) -> S3 static bucket
-                        |
-                        +-> WAF -> (dynamic requests) -> Application Load Balancer (public subnets)
-                                                                |
-PRIMARY REGION                                                  v
-   Private subnet AZ1: ECS service / backend tasks   <--+
-   Private subnet AZ2: ECS service / backend tasks   <--+--> Data layer
-                                                              - Redis cache (ElastiCache)
-                                                              - RDS primary  --(Multi-AZ sync)--> RDS standby
-                                                                    |
-                                                                    | cross-region replication
-                                                                    v
-DR REGION                                                    RDS read replica
+Route 53 -> CloudFront (WAF) -+-> /static/*, /errors/*  -> S3 static bucket (private, Origin Access Control)
+                              |
+                              +-> everything else -> Application Load Balancer (public subnets, HTTPS only)
+                                                            |
+PRIMARY REGION (ap-southeast-1)                             | HTTPS to the container (port 8443)
+   Private app subnet AZ1: ECS Fargate tasks   <------------+
+   Private app subnet AZ2: ECS Fargate tasks   <------------+--> Private data subnets
+                                                                 - Redis (ElastiCache, TLS)
+                                                                 - RDS PostgreSQL primary --(Multi-AZ sync)--> standby
+                                                                       |
+                                                                       | cross-region replication (pilot light)
+                                                                       v
+DR REGION (ap-southeast-2)                                       RDS read replica
 ```
 
-### Key areas to address
+The application is the Task Manager app, in a separate repository: [sample-app](https://gitlab.com/devops-lab6555046/sample-app). Its pipeline pushes a versioned image to ECR and uploads the static files to S3. This repo only runs the image it is told to run (`app_image_tag`).
 
-1. **Infrastructure & Systems (AWS depth)**: VPC, subnets, ALB, ECS, RDS, ElastiCache, S3, CloudFront, Route 53.
-2. **Automation & IaC / CI-CD**: the module structure below, kept in this Git repo.
-3. **Security & Compliance**: IAM, secrets/KMS, TLS, WAF, private networking, guardrails.
-4. **Observability**: dashboards, metrics, alarms, logging.
-5. **Resilience & DR**: Multi-AZ, cross-region replica, failover and recovery targets (RTO/RPO).
-
-## IaC abstract structure
-
-The layout follows the structure given in the brief: a root configuration, reusable layers as modules, environment-specific resources, and an interface of variables and outputs. The directory tree below is the **planned layout**, so check the repo for what has been implemented so far.
+## Repository layout
 
 ```
 .
-├── modules/                  # Reusable infrastructure layers
-│   ├── network/              # VPC, public/private subnets across 2 AZs, routing, NAT, endpoints
-│   ├── security/             # IAM roles/policies, KMS, Secrets Manager, security groups, WAF
-│   ├── compute/              # ALB, ECS cluster/services/task definitions, autoscaling
-│   └── data/                 # RDS (Multi-AZ + cross-region replica), ElastiCache Redis, S3
-├── environments/             # One root configuration per environment
-│   ├── dev/
-│   ├── stage/
-│   └── prod/
-│       ├── main.tf           # terraform {backend "remote"}, required_providers, provider,
-│       │                     #   module calls (networking, security, compute, data),
-│       │                     #   environment-specific resources
-│       ├── variables.tf      # environment, region, ...
-│       └── outputs.tf        # service_endpoint, ...
+├── modules/                    Reusable infrastructure layers
+│   ├── network/                VPC, three subnet tiers in 2 AZs, endpoints, flow logs
+│   ├── security/               KMS keys, security groups, IAM roles
+│   ├── data/                   RDS (Multi-AZ), Redis, DB secret, S3 buckets
+│   ├── compute/                ALB, ECS cluster, service, task definition
+│   ├── dns/                    Hosted zone lookup, ACM certificates
+│   ├── edge/                   WAF, CloudFront, Route 53 records
+│   ├── observability/          Dashboard, alarms, SNS topic
+│   └── dr/                     DR region network, key and RDS read replica
+├── environments/               One root configuration per environment
+│   ├── dev/                    Deployed and tested
+│   ├── stage/                  Same modules, sample values
+│   └── prod/                   Same modules, sample values
+├── docs/                       Short design notes (see below)
+├── .gitlab-ci.yml              Pipeline
 └── README.md
 ```
 
-Each environment's root configuration has four parts:
+Each environment root has the files below, and each starts with the banner of the section it belongs to (Root Configuration, Reusable Infrastructure Layers, Environment-Specific Resources, Interfaces):
 
-- **Root configuration**: a `terraform` block with a remote backend and required providers, and the `provider` block.
-- **Reusable layers**: `networking`, `security`, `compute` and `data` modules, sourced from `../modules/*`.
-- **Environment-specific resources**: the application service resources for that environment.
-- **Interfaces**: `environment` and `region` input variables, and a `service_endpoint` output.
+| File | Content |
+|---|---|
+| `versions.tf`, `backend.tf`, `providers.tf` | Root configuration: Terraform and provider versions, S3 backend, providers |
+| `main.tf` | The `networking`, `security`, `compute` and `data` module calls, plus the environment-specific resources (edge, DNS, observability, DR) |
+| `variables.tf`, `outputs.tf` | Interfaces |
+| `locals.tf` | Tags |
+| `<env>.tfvars` | Values for the environment |
 
-Dev, Stage and Prod call the same modules and differ only in variable values, which keeps the environments consistent.
+Dev, Stage and Prod call the same modules and differ only in values, which keeps the environments consistent.
+
+## Design notes
+
+| Document | Topic |
+|---|---|
+| [docs/security.md](docs/security.md) | Keys, TLS end to end, WAF, secrets |
+| [docs/observability.md](docs/observability.md) | Dashboard, alarms, logs, notifications |
+| [docs/dr.md](docs/dr.md) | Pilot light strategy, RTO/RPO, failover steps, known gaps |
+| [docs/tagging.md](docs/tagging.md) | Tag model for cost allocation |
+| [docs/multi-account.md](docs/multi-account.md) | Account per environment, guardrails, central keys and secrets (design only) |
+| [docs/build-order.md](docs/build-order.md) | The order the layers were built and verified |
 
 ## Design principles
 
-- **Consistency**: one set of modules for all environments, parameterised by `environment` and `region`.
+- **Consistency**: one set of modules for all environments, parameterised by values.
 - **Least privilege**: scoped IAM roles, private subnets for compute and data, and only the ALB exposed behind CloudFront and WAF.
-- **Encryption**: KMS-encrypted data at rest, TLS in transit, secrets held in a central secrets store.
-- **FinOps**: mandatory tags (for example `environment`, `service`, `owner`, `cost-center`) applied through provider default tags.
-- **Resilience**: two AZs for compute, Multi-AZ RDS, and a cross-region read replica for DR.
-- **Observability**: CloudWatch dashboards and alarms for the ALB, ECS, RDS and Redis, with alarms routed to notifications.
-- **Safe delivery**: CI/CD runs `fmt`, `validate`, lint and security scans, then a plan on pull requests. Apply is gated per environment, with approval for Prod.
+- **Encryption**: customer-managed KMS keys per service, TLS in transit all the way to the container.
+- **Secrets**: the database password is generated at apply time, never stored in code or state, and kept in Secrets Manager. The pipeline uses short-lived OIDC credentials, with no stored AWS keys.
+- **FinOps**: standard tags (`Project`, `Environment`, `Service`, `Owner`, `CostCenter`, `ManagedBy`) applied through provider default tags, with a platform set and a workload set.
+- **Resilience**: two AZs for compute, Multi-AZ RDS, and a cross-region read replica (pilot light) for DR.
+- **Observability**: a dashboard and 12 alarms to one encrypted SNS topic, plus WAF, load balancer, RDS and application logs.
+- **Safe delivery**: GitLab CI/CD runs `fmt`, `validate` and Checkov, plans on merge requests, and applies from `main` only. Stage and prod jobs are manual and use their own roles.
 
 ## Usage
 
-Prerequisites: Terraform, AWS credentials for the target account, and access to the remote state backend.
+Prerequisites: Terraform `~> 1.15.0`, AWS credentials for the target account, access to the S3 state backend, and the pieces Terraform does not create: the ECR repository (with an image pushed) and a Route 53 hosted zone for the domain.
 
 ```bash
 cd environments/<dev|stage|prod>
 terraform init
-terraform plan  -var="environment=<env>" -var="region=<region>"
-terraform apply -var="environment=<env>" -var="region=<region>"
+terraform plan  -var-file=<env>.tfvars
+terraform apply -var-file=<env>.tfvars
 ```
+
+The `*.tfvars` files are git-ignored. The pipeline passes the same values as CI/CD variables, and `alarm_email` comes from `TF_VAR_alarm_email`.
+
+Settings to know about:
+
+- `enable_dr`: creates the DR region resources and the read replica. Off outside demo windows because the replica costs money.
+- `app_image_tag`: the image version to run. Raise it to release, set it back to roll back.
+- Dev only: `db_skip_final_snapshot`, `db_deletion_protection`, `s3_force_destroy`, `alb_deletion_protection` and `secret_recovery_window_days` allow a quick destroy. Stage and prod keep the safe values.
+
+## Pipeline
+
+Stages: `validate`, `plan-dev`, `apply-dev`, `plan-stage`, `apply-stage`, `plan-prod`, `apply-prod`, `destroy`.
+
+- Merge requests: `validate`, Checkov (report only) and a plan with a read-only role.
+- `main`: plan, then a manual apply for dev. Stage and prod plan and apply are manual and fail with a clear message until their own role variable is set.
+- `destroy-dev` is manual and exists for demo windows.
+- Rollback: infrastructure by Git tag, application by `app_image_tag`.
+
+## Next steps
+
+- **ECS auto scaling**: scale the number of tasks with load (target tracking on CPU or requests per target). Not added yet; the service runs a fixed number of tasks across two AZs.
 
 ## Deliverables
 
 - [ ] Presentation (20 minutes or less)
 - [x] Git repository (this repo)
-- [ ] IaC modules and environment configurations
+- [x] IaC modules and environment configurations
