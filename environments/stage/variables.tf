@@ -162,3 +162,15 @@ variable "secret_recovery_window_days" {
   description = "Days a deleted database secret can be recovered (0 deletes it at once)"
   default     = 7
 }
+
+variable "ecs_min_tasks" {
+  type        = number
+  description = "Fewest ECS tasks auto scaling keeps running"
+  default     = 2
+}
+
+variable "ecs_max_tasks" {
+  type        = number
+  description = "Most ECS tasks auto scaling can run"
+  default     = 4
+}

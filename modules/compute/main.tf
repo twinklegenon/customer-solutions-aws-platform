@@ -187,5 +187,38 @@ resource "aws_ecs_service" "app" {
     container_port   = var.app_port
   }
 
+  # Auto scaling changes the task count, so Terraform must not reset it.
+  lifecycle {
+    ignore_changes = [desired_count]
+  }
+
   depends_on = [aws_lb_listener.https]
+}
+
+# --- Auto scaling: add tasks when CPU is high, remove them when it is low ---
+
+resource "aws_appautoscaling_target" "ecs" {
+  service_namespace  = "ecs"
+  scalable_dimension = "ecs:service:DesiredCount"
+  resource_id        = "service/${aws_ecs_cluster.cluster.name}/${aws_ecs_service.app.name}"
+  min_capacity       = var.min_tasks
+  max_capacity       = var.max_tasks
+}
+
+resource "aws_appautoscaling_policy" "cpu" {
+  name               = "${local.name_prefix}-scale-cpu"
+  policy_type        = "TargetTrackingScaling"
+  service_namespace  = aws_appautoscaling_target.ecs.service_namespace
+  scalable_dimension = aws_appautoscaling_target.ecs.scalable_dimension
+  resource_id        = aws_appautoscaling_target.ecs.resource_id
+
+  target_tracking_scaling_policy_configuration {
+    target_value       = var.cpu_target_percent
+    scale_in_cooldown  = 300
+    scale_out_cooldown = 60
+
+    predefined_metric_specification {
+      predefined_metric_type = "ECSServiceAverageCPUUtilization"
+    }
+  }
 }
