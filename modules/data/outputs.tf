@@ -14,7 +14,7 @@ output "db_port" {
 
 output "db_master_secret_arn" {
   description = "Secrets Manager secret that holds the database master password"
-  value       = aws_db_instance.postgres.master_user_secret[0].secret_arn
+  value       = aws_secretsmanager_secret.db.arn
 }
 
 output "db_arn" {

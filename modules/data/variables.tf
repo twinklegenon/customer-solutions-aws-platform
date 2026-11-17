@@ -116,3 +116,9 @@ variable "log_retention_days" {
   description = "Retention in days for the database log group"
   default     = 30
 }
+
+variable "secret_recovery_window_days" {
+  type        = number
+  description = "Days a deleted database secret can be recovered (0 deletes it at once)"
+  default     = 7
+}

@@ -156,3 +156,9 @@ variable "workload_cost_center" {
   type        = string
   description = "Cost center of the workload for show-back/charge-back"
 }
+
+variable "secret_recovery_window_days" {
+  type        = number
+  description = "Days a deleted database secret can be recovered (0 deletes it at once)"
+  default     = 7
+}
