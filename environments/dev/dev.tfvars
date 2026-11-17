@@ -43,7 +43,7 @@ app_image_tag        = "1.0.2"
 domain_name = "customersolutionslab.com"
 
 # Disaster recovery (module.dr): read replica in a second region. Turn it on only for a demo window.
-enable_dr   = true
+enable_dr   = false
 dr_region   = "ap-southeast-2"
 dr_vpc_cidr = "10.20.0.0/16"
 dr_subnets = {
