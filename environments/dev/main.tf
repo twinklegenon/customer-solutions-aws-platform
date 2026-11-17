@@ -111,6 +111,25 @@ module "edge" {
   static_bucket_regional_domain_name = module.data.static_bucket_regional_domain_name
 }
 
+# Pilot light: only the read replica runs in the DR region; compute is rebuilt on failover.
+module "dr" {
+  source = "../../modules/dr"
+  count  = var.enable_dr ? 1 : 0
+
+  providers = {
+    aws = aws.dr
+  }
+
+  environment            = var.environment
+  vpc_cidr               = var.dr_vpc_cidr
+  subnets                = var.dr_subnets
+  source_db_arn          = module.data.db_arn
+  db_instance_class      = var.db_instance_class
+  db_skip_final_snapshot = var.db_skip_final_snapshot
+  db_deletion_protection = var.db_deletion_protection
+  alarm_email            = var.alarm_email
+}
+
 module "observability" {
   source = "../../modules/observability"
 
@@ -128,4 +147,7 @@ module "observability" {
   redis_replication_group_id = module.data.redis_replication_group_id
   cloudfront_distribution_id = module.edge.distribution_id
   waf_web_acl_name           = module.edge.web_acl_name
+
+  dr_region             = var.dr_region
+  dr_replica_identifier = var.enable_dr ? module.dr[0].replica_identifier : ""
 }
