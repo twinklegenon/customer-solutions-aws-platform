@@ -91,6 +91,7 @@ The Multi-AZ failover inside the primary region was tested separately (about 29 
 
 ## Known gaps
 
+- **Found on the first apply, now fixed in code:** RDS does not allow a read replica of a PostgreSQL instance whose master password is managed by RDS. The `data` module now uses a write-only password: an ephemeral random value given to the database and to a Secrets Manager secret, so it never reaches the state, and the tasks read that secret. The trade-off is that RDS no longer rotates the password automatically; rotation is a Secrets Manager rotation function, added later. Not yet applied: the replica is verified at the next apply with `enable_dr = true`.
 - The runbook has not been run end to end, and the promotion has not been drilled. Compute is rebuilt from the same code, so the risks are the dependencies in step 4.
 - ECR cross-region replication, a replicated database secret and a DR certificate are not built.
 - The replica has no Multi-AZ standby (a cost choice for the pilot light).
@@ -100,5 +101,7 @@ The Multi-AZ failover inside the primary region was tested separately (about 29 
 The always-on parts are the replica, its storage and the small VPC. The first demo uses a single-AZ `db.t4g.micro` replica. Turn `enable_dr` on only for a demo window, then off again so `destroy-dev` removes it.
 
 ## Use it
+
+Prerequisite: the primary database uses the unmanaged write-only password (done in the `data` module).
 
 Set `enable_dr = true` in the environment's tfvars, merge, and run `plan-dev` and `apply-dev`. The replica takes 20 to 40 minutes to create. Confirm the subscription email from the DR region once.
