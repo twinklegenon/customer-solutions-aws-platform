@@ -8,7 +8,7 @@ The brief describes a multi-account estate, with ownership split between DevOps 
 |---|---|
 | Dev | Built and run end to end through the pipeline |
 | Stage and prod | Root files and sample tfvars exist and validate. Not applied: this exercise has one account |
-| Pipeline | Dev jobs only. The stage and prod jobs below are a design, not wired |
+| Pipeline | Dev jobs run. Stage and prod jobs are defined in `.gitlab-ci.yml` and manual: they need their accounts and role variables |
 | Organization, guardrails (SCPs), central keys and secrets | **Design only**, described below. Nothing is built |
 
 ## The account comes from the credentials, not the code
@@ -35,9 +35,23 @@ The three folders have the same files and call the same modules. Only the values
 
 ## GitLab setup
 
-- **Role variables scoped by environment.** `AWS_ROLE_ARN` and the plan role ARN exist once per environment, each holding that account's ARN. A job declared with `environment: stage` gets the stage value, so one job template serves all three.
+- **One role variable per environment.** Dev uses `AWS_ROLE_ARN` (and `AWS_PLAN_ROLE_ARN` for merge requests). Stage and prod use `AWS_ROLE_ARN_STAGE` and `AWS_ROLE_ARN_PROD`, each holding that account's role ARN. The names differ on purpose: a stage or prod job can never fall back to the dev role, and it stops with a message when its variable is not set.
 - **Approval for prod.** Make prod a protected environment with required approvers, which gives the manual gate. The available controls depend on the GitLab plan. Without them, use a manual job on the protected `main` branch.
 - **Values.** The tfvars are in the repository, so the pipeline reads them directly. Anything secret stays in CI/CD variables.
+
+## Deploying an environment to another account
+
+Nothing in the Terraform code names an account, so moving stage or prod to its own account is configuration, not a code change. The account in use is the one of the role the job assumes. To check which account a run used, read the account ID in the assumed role ARN in the job log (or run `aws sts get-caller-identity` locally).
+
+| # | Do this | Where |
+|---|---|---|
+| 1 | Create the OIDC identity provider for `https://gitlab.com` in the new account (see "One-time setup") | The new AWS account |
+| 2 | Create the role `gitlab-terraform-<env>` and the read-only plan role in that account, trusted from the project's `main` branch only | The new AWS account |
+| 3 | Add the role ARN as the CI/CD variable of that environment (`AWS_ROLE_ARN_STAGE` or `AWS_ROLE_ARN_PROD`), so the job assumes that account's role | GitLab |
+| 4 | Create the state bucket in that account and put its name in the environment's `backend.tf` | The new AWS account and the repository |
+| 5 | Create what Terraform does not manage: the ECR repository and the hosted zone for the environment's domain | The new AWS account |
+
+Until this is done, the sample stage and prod folders point at the dev account's state bucket (with their own key), so they would deploy to whichever account the credentials belong to. Names that include the account ID, such as the static bucket, change by themselves, because the modules read the account of the caller.
 
 ## How promotion runs (same commit)
 
@@ -129,4 +143,4 @@ The brief asks for centralised secrets and keys. The design separates **central 
 - Only dev has been deployed. Stage and prod follow the same pattern but were not run, because there is one account in this exercise.
 - The organization, the SCPs, the shared services account and the central secrets are a design. None of it exists, and no SCP has been tested.
 - Disaster recovery for prod is in `docs/dr.md`: the DR replica is on in prod and off in stage.
-- Drafting the stage and prod pipeline jobs is the next step. `.gitlab-ci.yml` has dev jobs only and has not been changed.
+- The stage and prod jobs have never run: there are no accounts or role variables for them in this exercise.
