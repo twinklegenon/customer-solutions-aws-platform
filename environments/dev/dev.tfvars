@@ -32,3 +32,12 @@ alb_deletion_protection = false # best practice: true (block accidental deletion
 # ECR repository (created manually, outside Terraform) and the version tag of the application image to run.
 app_image_repository = "dev-ecr-app"
 app_image_tag        = "1.0.1"
+
+# Disaster recovery (pilot light): a read replica in a second region. Turn it on only for a demo window.
+enable_dr   = true
+dr_region   = "ap-southeast-2"
+dr_vpc_cidr = "10.20.0.0/16"
+dr_subnets = {
+  "ap-southeast-2a" = "10.20.20.0/24"
+  "ap-southeast-2b" = "10.20.21.0/24"
+}
