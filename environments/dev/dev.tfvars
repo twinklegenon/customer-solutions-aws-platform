@@ -34,6 +34,8 @@ s3_force_destroy            = true  # best practice: false (never delete a bucke
 secret_recovery_window_days = 0     # best practice: 7 (a deleted secret can be recovered)
 
 # Compute (module.compute)
+ecs_min_tasks           = 2 # one per AZ
+ecs_max_tasks           = 4
 alb_deletion_protection = false # dev only. best practice: true (block accidental deletion)
 
 # ECR repository (created manually, outside Terraform) and the image version to run.

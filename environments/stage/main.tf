@@ -96,6 +96,9 @@ module "compute" {
     { name = "DB_PASSWORD", valueFrom = "${module.data.db_master_secret_arn}:password::" },
   ]
 
+  min_tasks = var.ecs_min_tasks
+  max_tasks = var.ecs_max_tasks
+
   alb_deletion_protection = var.alb_deletion_protection
   alb_logs_force_destroy  = var.s3_force_destroy
 }
