@@ -59,6 +59,28 @@ resource "aws_wafv2_web_acl" "cloudfront" {
   }
 
   rule {
+    name     = "aws-sqli"
+    priority = 4
+
+    override_action {
+      none {}
+    }
+
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesSQLiRuleSet"
+        vendor_name = "AWS"
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "${local.name_prefix}-waf-sqli"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  rule {
     name     = "rate-limit"
     priority = 3
 
