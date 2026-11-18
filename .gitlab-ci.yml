@@ -53,7 +53,7 @@ checkov:
     name: bridgecrew/checkov:3.4.3
     entrypoint: [""]
   script:
-    - checkov -d . --framework terraform --soft-fail --output cli --output junitxml --output-file-path console,results.xml
+    - checkov -d . --config-file .checkov.yaml --output cli --output junitxml --output-file-path console,results.xml
   artifacts:
     when: always
     paths:
