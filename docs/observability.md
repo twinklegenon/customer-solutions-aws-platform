@@ -46,6 +46,18 @@ An RDS event subscription also sends **failover** and **failure** events to the 
 - Log groups: `/<env>/<service>/<name>`, so `/dev/` lists our own logs together. Two names are fixed by AWS: WAF (`aws-waf-logs-` prefix) and RDS (`/aws/rds/instance/...`).
 - Alarms: filter by `dev-alarm-` and then by service.
 
+## Logs: retention and encryption
+
+| Log | Where | Retention | Encryption at rest |
+|---|---|---|---|
+| Application (ECS) | CloudWatch `/dev/ecs/app` | 30 days | CloudWatch Logs default (AWS-managed key) |
+| RDS PostgreSQL | CloudWatch `/aws/rds/instance/dev-rds/postgresql` | 30 days | CloudWatch Logs default |
+| WAF | CloudWatch `aws-waf-logs-dev-cloudfront` (us-east-1) | 30 days | CloudWatch Logs default |
+| VPC flow logs | CloudWatch `/dev/vpc/flow-logs` | 30 days | CloudWatch Logs default |
+| ALB access logs | S3 `dev-s3-alb-logs-<account>` | 30 days (lifecycle rule) | S3 default (SSE-S3) |
+
+All logs are encrypted at rest by default. The log groups do not use a customer-managed KMS key yet (next steps). Retention comes from the `log_retention_days` variable of each module (`flow_log_retention_days` for the flow logs). Nothing logs CloudFront access, S3 access or Redis, and there is no CloudTrail trail in this account.
+
 ## Design choices
 
 - **Customer-managed key for the topic.** CloudWatch alarms cannot publish to a topic that uses the AWS-managed SNS key, so the module uses its own key with a policy for CloudWatch and RDS events.
@@ -67,4 +79,4 @@ An RDS event subscription also sends **failover** and **failure** events to the 
 - Filtering logs by level or action (for example blocked WAF requests only) to cut volume and cost.
 - Container Insights, anomaly detection, X-Ray tracing.
 - A central dashboard over dev, stage and prod using CloudWatch cross-account observability: stage and prod share their metrics and logs with a monitoring account, and alarms stay local.
-- Log retention of one year and KMS encryption of the log groups. The ALB log bucket uses S3-managed encryption, because the load balancer cannot write access logs to a KMS-encrypted bucket.
+- Log retention of one year for audit logs, and customer-managed KMS keys for the log groups (they use the default encryption today). The ALB log bucket uses S3-managed encryption, because the load balancer cannot write access logs to a KMS-encrypted bucket.
