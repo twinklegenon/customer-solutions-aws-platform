@@ -1,0 +1,48 @@
+# Checkov baseline. Findings listed here are triaged and skipped on purpose; any other finding fails the pipeline.
+# Each entry says why. "Backlog" means we plan to fix it. A skip applies to every resource, so review this list when it changes.
+
+framework:
+  - terraform
+
+skip-check:
+  # --- Backlog: small fixes, each needs an apply to test ---
+  - CKV_AWS_131   # Backlog: ALB should drop invalid header fields (drop_invalid_header_fields = true)
+  - CKV_AWS_300   # Backlog: abort incomplete multipart uploads in the ALB log bucket lifecycle
+  - CKV2_AWS_60   # Backlog: copy tags to RDS snapshots (copy_tags_to_snapshot = true)
+  - CKV_AWS_226   # Backlog: set auto_minor_version_upgrade explicitly (the default is already on)
+  - CKV2_AWS_12   # Backlog: restrict the default security group of the VPCs
+  - CKV_AWS_21    # Backlog: enable versioning on the static bucket
+  - CKV2_AWS_61   # Backlog: lifecycle rule on the static bucket
+  - CKV_AWS_158   # Backlog: customer-managed KMS key on the log groups (they use the default encryption)
+  - CKV_AWS_338   # Backlog: one year retention for audit logs (30 days today, set by a variable)
+  - CKV_AWS_31    # Backlog: Redis auth token (Redis is private, reachable only from the app security group, TLS on)
+  - CKV2_AWS_57   # Backlog: rotation function for the database secret (the password is generated at apply time)
+  - CKV_AWS_161   # Backlog: RDS IAM authentication (the app uses the password from Secrets Manager)
+  - CKV_AWS_86    # Backlog: CloudFront access logs (WAF logs are on)
+  - CKV2_AWS_32   # Backlog: response headers policy on CloudFront
+  - CKV_AWS_374   # Backlog: geo restriction on CloudFront (no business requirement yet)
+  - CKV2_AWS_30   # Backlog: RDS query logging needs a parameter group (the postgresql log is exported)
+
+  # --- Accepted: deliberate design or cost choices ---
+  - CKV2_AWS_28   # Accepted: the WAF is on CloudFront in front of the ALB, and the ALB admits only CloudFront
+  - CKV_AWS_145   # Accepted: ALB access logs cannot be written to a KMS-encrypted bucket; it uses S3-managed keys
+  - CKV_AWS_157   # Accepted: the DR replica has no Multi-AZ standby (pilot light, a cost choice)
+  - CKV_AWS_129   # Accepted: the DR replica does not export logs (pilot light)
+  - CKV2_AWS_11   # Accepted: no flow logs in the DR VPC (it has no workloads)
+  - CKV2_AWS_50   # Accepted: Redis is one node in dev (a cost choice)
+  - CKV_AWS_65    # Accepted: Container Insights costs extra; healthy targets and CPU alarms are used instead
+  - CKV_AWS_353   # Accepted: RDS Performance Insights costs extra in dev
+  - CKV_AWS_118   # Accepted: RDS enhanced monitoring costs extra in dev
+  - CKV_AWS_18    # Accepted: no access logs on the S3 buckets (CloudFront and ALB logs cover access)
+  - CKV_AWS_144   # Accepted: no cross-region replication for the static and log buckets (static files are rebuilt from the build)
+  - CKV2_AWS_62   # Accepted: no S3 event notifications needed
+  - CKV_AWS_310   # Accepted: no CloudFront origin failover (one origin)
+  - CKV_AWS_305   # Accepted: no default root object (the app serves / through the load balancer)
+
+  # --- False positives ---
+  - CKV_AWS_356   # False positive: "*" in a KMS key policy means this key
+  - CKV_AWS_111   # False positive: same, key policies
+  - CKV_AWS_109   # False positive: same, key policies
+  - CKV2_AWS_64   # False positive: keys without a custom policy use the default key policy
+  - CKV2_AWS_5    # False positive: the security groups are attached to resources in other modules
+  - CKV2_AWS_47   # False positive: the web ACL has the AWS known-bad-inputs rule group, which covers Log4j
